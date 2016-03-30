@@ -12,5 +12,5 @@ app_prep   : dep-composer
 app_post   : ~
 app_path   : ~
 pkg_name   : augustus-exception-library
-pkg_desc   : "a collections of common utilities and helpers for PHP object reflection tasks."
+pkg_desc   : "enhanced base exception implementations."
 pkg_bndl   : false

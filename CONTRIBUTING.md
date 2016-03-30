@@ -17,7 +17,7 @@ Ensure the following requirements are met when contributing pull-requests to thi
 - Any desired contributor attribution is added at the class or method level using the `@author` PHPDoc syntax. For example
   ```php
   /**
-   * This file is part of the `src-run/augustus-utility-library` project.
+   * This file is part of the `src-run/augustus-exception-library` project.
    *
    * @author [Contributor Name] <[contributor@email]>
    */

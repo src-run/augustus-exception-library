@@ -15,8 +15,7 @@
 language : php
 sudo     : false
 
-# Build against the following engines: Zend 5.6.x, 7.0.x, and
-# 7-nightly, and HHVM-stable and -nightly builds.
+# Build against the following engines: Zend 5.6.x and 7.0.x
 php :
   - 5.6
   - 7.0
@@ -40,8 +39,8 @@ env :
 # Use builder to install system environment and application 
 # requirements.
 install :
-  - bash .config/builders/build-reqs/build-reqs.bash up-env
-  - bash .config/builders/build-reqs/build-reqs.bash up-app
+  - bash .run/builders/build-reqs/build-reqs.bash up-env
+  - bash .run/builders/build-reqs/build-reqs.bash up-app
 
 # Run unit tests!
 script : bin/phpunit -vvv
@@ -49,7 +48,7 @@ script : bin/phpunit -vvv
 # Use builder to run post-operations, most importantly handle
 # statistics submissions for text coverage.
 after_script :
-  - bash .config/builders/build-reqs/build-reqs.bash dn-app
-  - bash .config/builders/build-reqs/build-reqs.bash dn-env
+  - bash .run/builders/build-reqs/build-reqs.bash dn-app
+  - bash .run/builders/build-reqs/build-reqs.bash dn-env
 
 ...
