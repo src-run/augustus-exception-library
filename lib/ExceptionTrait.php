@@ -52,7 +52,7 @@ trait ExceptionTrait
      *
      * @return static
      */
-    final static public function create($message = null, ...$parameters)
+    final public static function create($message = null, ...$parameters)
     {
         return new static($message, ...$parameters);
     }
@@ -274,7 +274,6 @@ trait ExceptionTrait
      */
     final public function hasAttribute($index)
     {
-
         return (bool) isset($this->attributes[$index]);
     }
 
