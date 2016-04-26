@@ -12,7 +12,7 @@
 
 namespace SR\Exception;
 
-use SR\Utility\ClassUtil;
+use SR\Utility\ClassInspect;
 
 /**
  * Class ExceptionTrait.
@@ -300,9 +300,8 @@ trait ExceptionTrait
      */
     final public function getType($fqcn = false)
     {
-        $className = get_called_class();
-
-        return $fqcn ? $className : ClassUtil::getNameShort($className);
+        return $fqcn ? ClassInspect::getNameQualified(get_called_class()) :
+            ClassInspect::getNameShort(get_called_class());
     }
 
     /**
