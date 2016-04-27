@@ -1,10 +1,12 @@
 machine:
   php:
     version: 7.0.3
+
 checkout:
   post:
     - git submodule sync
     - git submodule update --init
+
 dependencies:
   pre:
     - echo "date.timezone = America/New_York" | tee -a "$(php -i | grep "Loaded Configuration File" | grep -oP "\/opt\/.*")"
@@ -13,6 +15,7 @@ dependencies:
     - bash .run/builders/build-reqs/build-reqs.bash up-env
     - sudo composer self-update && composer update -n --prefer-dist
     - bash .run/builders/build-reqs/build-reqs.bash up-app
+
 test:
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/phpunit
@@ -27,6 +30,7 @@ test:
     - mv var/build/clover.xml $CIRCLE_ARTIFACTS/phpunit/clover.xml
     - mv var/build/coverage $CIRCLE_ARTIFACTS/phpunit/coverage
     - mv composer.lock composer.json $CIRCLE_ARTIFACTS/composer/
+
 notify:
   webhooks:
     - url: https://src.run/hooks/circle

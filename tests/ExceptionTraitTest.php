@@ -132,7 +132,7 @@ class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
 
         $message = 'A brand new message for the test method %s.';
         $method = __METHOD__;
-        $code = mt_rand(100,999);
+        $code = mt_rand(100, 999);
         $file = __FILE__;
         $line = __LINE__;
 

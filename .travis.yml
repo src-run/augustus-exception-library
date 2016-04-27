@@ -4,50 +4,43 @@
 # This file is part of the `src-run/augustus-exception-library` project.
 #
 # (c) Rob Frawley 2nd <rmf@src.run>
+# (c) Scribe Inc      <scr@src.run>
 #
 # For the full copyright and license information, view the LICENSE.md
 # file distributed with this source code.
 ##
 
-# Set the required project language environment and advise
-# Travis that this project fully supports the new, speedy,
-# container-built infrastructure.
-language : php
-sudo     : false
+language: php
 
-# Build against the following engines: Zend 5.6.x and 7.0.x
-php :
+sudo: false
+
+php:
   - 5.6
   - 7.0
 
-# Set a sane clone depth for Git.
-git :
-  depth : 3
+git:
+  depth: 3
 
-# Add custom Hostname to build environment.
-addons :
-  hosts :
-    - mainline.src.run
+services:
+  - mysql
+  - memcached
 
-# Define any required global enviornment variables. Specifically,
-# the package_builder variable must be set to true to enable the
-# automated package builder scripts.
-env :
-  global :
+addons:
+  hosts:
+    - travis.src.run
+
+env:
+  global:
     - build_package=true
+    - secure: G3EdnF+JQ7R1+JmyZJZACypfVelF15tMDNQhhvmQG6uCCsGhM6oVgoCoIDY4xYQu+2xOVP00AM796sIowxPRrJ7VzxZtky6KIY0fkex4FE+s69WFqysDupNVEICALpv9E1xNUkDmFIqO5dF5im63tepfmIXJkGM4LEuujm8Kg4RGLVxoy3BAmdfXGvsWGRyLjXH83/vNHRc36sYM9CyYu69QJVrBV6mSQcNDdywb+aabuFQ/fe/kDfY65d06YsdchG+0f26f19UHSN0yTReGIVB7V5pwlwSm/q8E/W9fqTfxWhlCYnoxFJpwuA/DCSel6uyhYKUYjuRpo4dfty0MMWqfUJQ7Cy5AdmuuYVefZ0w8kIJV3Q6e32gDQejv+7UicuvY3PpmjPtouhSOo6sRBX2BGDNWDzhwE7uAzzoJaW3Z/qklxDseFr1C2dW9rxj99b2rGsGVZoCIX8b7MmHe/PAJbdEz++kC9E/X9wBzbtudwNFt30eUsGmjbrzc9hZWH/pC5Ckfe0+tCow/fWab9TrPsgwpM12aybBqdDoJ8z8cEscyHGaNd81ALXNQHFYO8l/rR0DJoP3MZ8mO/jBt26JAGKya9Dg7fNDFujRQEprf9hlDWvSEEXUtnh/Xndk1B8JGDV8jPKmVPOkgfG8pJpQQw+YpcFjvy9ZaQSgC2yE=
 
-# Use builder to install system environment and application 
-# requirements.
-install :
+install:
   - bash .run/builders/build-reqs/build-reqs.bash up-env
   - bash .run/builders/build-reqs/build-reqs.bash up-app
 
-# Run unit tests!
-script : bin/phpunit -vvv
+script: bin/phpunit -vvv
 
-# Use builder to run post-operations, most importantly handle
-# statistics submissions for text coverage.
-after_script :
+after_script:
   - bash .run/builders/build-reqs/build-reqs.bash dn-app
   - bash .run/builders/build-reqs/build-reqs.bash dn-env
 
