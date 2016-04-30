@@ -37,12 +37,12 @@ trait ExceptionTrait
     {
         $this->setAttributes([]);
 
-        list($previous, $replacements) = $this->parseParameters($parameters);
+        list($replacements, $previous) = $this->parseParameters($parameters);
 
         parent::__construct(
             $this->compileMessage($message, ...$replacements),
             $this->compileCode(null),
-            $this->compilePrevious($previous)
+            $this->compilePrevious(array_pop($previous))
         );
     }
 
@@ -142,10 +142,11 @@ trait ExceptionTrait
      */
     final public function with(...$parameters)
     {
-        list($previous, $replacements) = $this->parseParameters($parameters);
+        $replacements = $this->filterReplacementParameters($parameters);
+        $throwable = $this->filterFirstThrowableParameter($parameters);
 
-        if ($previous instanceof \Exception) {
-            $this->setPrevious($previous);
+        if ($throwable !== null) {
+            $this->setPrevious($throwable);
         }
 
         if (count($replacements) > 0) {
@@ -205,11 +206,11 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Exception $exception
+     * @param \Throwable $exception
      *
      * @return $this
      */
-    final public function setPrevious(\Exception $exception)
+    final public function setPrevious(\Throwable $exception)
     {
         $this->__construct($this->messageOriginal ?: $this->getMessage(), $exception);
 
@@ -307,25 +308,51 @@ trait ExceptionTrait
     /**
      * @internal
      *
-     * @param ExceptionInterface[]|mixed[] $parameters
+     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
      *
-     * @return ExceptionInterface[]|mixed[]
+     * @return mixed[]
      */
-    final protected function parseParameters(array $parameters = [])
+    final protected function filterReplacementParameters(array $parameters = [])
     {
-        $throwable = null;
-
-        $replaces = array_filter($parameters, function ($value) use (&$throwable) {
-            if ($value instanceof \Throwable || $value instanceof \Exception) {
-                $throwable = $value;
-
-                return false;
-            }
-
-            return true;
+        $replacements = array_filter($parameters, function ($param) {
+            return ! ($param instanceof \Throwable || $param instanceof \Exception || $param instanceof \Error);
         });
 
-        return [$throwable, $replaces];
+        return $replacements;
+    }
+
+    /**
+     * @internal
+     *
+     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
+     *
+     * @return \Throwable[]|\Exception[]|\Error[]
+     */
+    final protected function filterThrowableParameters(array $parameters = [])
+    {
+        $throwables = array_filter($parameters, function ($param) {
+            return ($param instanceof \Throwable || $param instanceof \Exception || $param instanceof \Error);
+        });
+
+        return $throwables;
+    }
+
+    /**
+     * @internal
+     *
+     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
+     *
+     * @return \Throwable|\Exception|\Error
+     */
+    final protected function filterFirstThrowableParameter(array $parameters = [])
+    {
+        $throwables = $this->filterThrowableParameters($parameters);
+
+        if (count($throwables) !== 0) {
+            return array_shift($throwables);
+        }
+
+        return null;
     }
 
     /**

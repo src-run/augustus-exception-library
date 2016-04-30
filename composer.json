@@ -3,7 +3,7 @@
   "license"     : "MIT",
   "type"        : "library",
   "homepage"    : "https://src.run/augustus-exception-library",
-  "description" : "simple and fluent, core exception base class, as well as a collection of commonly used exceptions",
+  "description" : "core exception base class with fluent API, as well as a set of exceptions built to utilize this and replace core-engine exceptions",
   "support" : {
     "email"  : "rmf@src.run",
     "issues" : "https://src.run/augustus-exception-library/issues",
@@ -21,8 +21,9 @@
     }
   ],
   "require" : {
-    "php"                              : "^5.6|^7.0",
-    "src-run/augustus-utility-library" : "^0.6"
+    "php"                               : "^5.6|^7.0",
+    "src-run/augustus-polyfill-library" : "^0.6",
+    "src-run/augustus-utility-library"  : "^0.6"
   },
   "require-dev" : {
     "phpunit/phpunit"        : "^5.0",

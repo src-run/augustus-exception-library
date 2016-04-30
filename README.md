@@ -8,7 +8,7 @@
 
 [Welcome](https://src.run/go/readme_welcome)!
 The `src-run/augustus-exception-library` package provides a
-simple and fluent, core exception base class, as well as a collection of commonly used exceptions
+core exception base class with fluent API, as well as a set of exceptions built to utilize this and replace core-engine exceptions
 
 ### Grouping
 
