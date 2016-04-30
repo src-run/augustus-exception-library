@@ -12,7 +12,6 @@
 
 namespace SR\Exception;
 
-use SR\Polyfill\Php70\Assert;
 use SR\Utility\ClassInspect;
 
 /**
@@ -318,7 +317,7 @@ trait ExceptionTrait
     final protected function filterReplacementParameters(array $parameters = [])
     {
         $replacements = array_filter($parameters, function ($param) {
-            return !Assert::throwableEquitable($param);
+            return ! ClassInspect::isThrowableEquitable($param);
         });
 
         return $replacements;
@@ -332,7 +331,7 @@ trait ExceptionTrait
     final protected function filterThrowableParameters(array $parameters = [])
     {
         $throwables = array_filter($parameters, function ($param) {
-            return Assert::throwableEquitable($param);
+            return ClassInspect::isThrowableEquitable($param);
         });
 
         return $throwables;
@@ -416,7 +415,7 @@ trait ExceptionTrait
      */
     final protected function compilePrevious($throwable = null)
     {
-        return Assert::throwableEquitable($throwable) ? $throwable : null;
+        return ClassInspect::isThrowableEquitable($throwable) ? $throwable : null;
     }
 }
 
