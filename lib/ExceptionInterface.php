@@ -68,22 +68,22 @@ interface ExceptionInterface extends \Throwable
     const CODE_RUNTIME = 1004;
 
     /**
-     * @param string|null $message
-     * @param mixed,...   $parameters
+     * @param null|string $message
+     * @param mixed       ...$parameters
      *
      * @return static
      */
     public static function create($message = null, ...$parameters);
 
     /**
-     * @return array
-     */
-    public function __debugInfo();
-
-    /**
      * @return string
      */
     public function __toString();
+
+    /**
+     * @return mixed[]
+     */
+    public function __debugInfo();
 
     /**
      * @return string
@@ -106,25 +106,35 @@ interface ExceptionInterface extends \Throwable
     public function getLine();
 
     /**
-     * @return \Exception|null
+     * @return null|\Throwable|\Exception|\Error
      */
     public function getPrevious();
 
     /**
-     * @return array
+     * @return mixed[]
      */
     public function getTrace();
 
     /**
-     * @param mixed,... ...$parameters
+     * @return string
+     */
+    public function getDefaultMessage();
+
+    /**
+     * @return int
+     */
+    public function getDefaultCode();
+
+    /**
+     * @param mixed ...$parameters
      *
      * @return $this
      */
     public function with(...$parameters);
 
     /**
-     * @param string    $message
-     * @param mixed,... $replacements
+     * @param string $message
+     * @param mixed  ...$replacements
      *
      * @return $this
      */
@@ -152,18 +162,23 @@ interface ExceptionInterface extends \Throwable
     public function setLine($line);
 
     /**
-     * @param \Throwable|\Exception $thowable
+     * @param null|\Exception|\Throwable|\Error $throwable
      *
      * @return $this
      */
-    public function setPrevious($thowable);
+    public function setPrevious($throwable);
 
     /**
-     * @param array $attributes
+     * @param mixed[] $attributes
      *
      * @return $this
      */
     public function setAttributes(array $attributes = []);
+
+    /**
+     * @return mixed[]
+     */
+    public function getAttributes();
 
     /**
      * @param mixed       $attribute
@@ -172,11 +187,6 @@ interface ExceptionInterface extends \Throwable
      * @return $this
      */
     public function addAttribute($attribute, $key = null);
-
-    /**
-     * @return array
-     */
-    public function getAttributes();
 
     /**
      * @param string $key
@@ -193,7 +203,7 @@ interface ExceptionInterface extends \Throwable
     public function hasAttribute($key);
 
     /**
-     * @return array
+     * @return mixed[]
      */
     public function getTraceLimited();
 

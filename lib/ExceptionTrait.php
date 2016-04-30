@@ -31,8 +31,8 @@ trait ExceptionTrait
     protected $messageOriginal;
 
     /**
-     * @param string|null $message
-     * @param mixed ,...   $parameters
+     * @param null|string $message
+     * @param mixed       ...$parameters
      */
     final public function __construct($message = null, ...$parameters)
     {
@@ -49,8 +49,8 @@ trait ExceptionTrait
     }
 
     /**
-     * @param string|null $message
-     * @param mixed,...   $parameters
+     * @param null|string $message
+     * @param mixed       ...$parameters
      *
      * @return static
      */
@@ -76,7 +76,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
     final public function __debugInfo()
     {
@@ -112,12 +112,12 @@ trait ExceptionTrait
     abstract public function getLine();
 
     /**
-     * @return \Exception|null
+     * @return null|\Throwable|\Exception|\Error
      */
     abstract public function getPrevious();
 
     /**
-     * @return array
+     * @return mixed[]
      */
     abstract public function getTrace();
 
@@ -138,7 +138,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param {...,mixed,mixed[]} ...$parameters
+     * @param mixed ...$parameters
      *
      * @return $this
      */
@@ -159,8 +159,8 @@ trait ExceptionTrait
     }
 
     /**
-     * @param string              $message
-     * @param {...,mixed,mixed[]} $replacements
+     * @param string $message
+     * @param mixed  ...$replacements
      *
      * @return $this
      */
@@ -208,7 +208,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Throwable|\Exception $throwable
+     * @param null|\Exception|\Throwable|\Error $throwable
      *
      * @return $this
      */
@@ -220,7 +220,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param array $attributes
+     * @param mixed[] $attributes
      *
      * @return $this
      */
@@ -240,8 +240,8 @@ trait ExceptionTrait
     }
 
     /**
-     * @param mixed      $attribute
-     * @param null|mixed $key
+     * @param mixed       $attribute
+     * @param null|string $key
      *
      * @return $this
      */
@@ -281,7 +281,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
     final public function getTraceLimited()
     {
@@ -297,7 +297,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param false|bool $qualified
+     * @param bool $qualified
      *
      * @return string
      */
@@ -311,7 +311,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
+     * @param mixed[] $parameters
      *
      * @return mixed[]
      */
@@ -325,7 +325,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
+     * @param mixed[] $parameters
      *
      * @return \Throwable[]|\Exception[]|\Error[]
      */
@@ -339,7 +339,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
+     * @param mixed[] $parameters
      *
      * @return \Throwable|\Exception|\Error
      */
@@ -356,7 +356,7 @@ trait ExceptionTrait
 
     /**
      * @param null|string $message
-     * @param mixed,...   $replacements
+     * @param mixed       ...$replacements
      *
      * @return string
      */
@@ -376,7 +376,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param int|null $code
+     * @param null|int $code
      *
      * @return int
      */
@@ -386,33 +386,33 @@ trait ExceptionTrait
     }
 
     /**
-     * @param string|\SplFileInfo $file
+     * @param null|string|\SplFileInfo $file
      *
      * @return string|null
      */
-    final protected function compileFile($file)
+    final protected function compileFile($file = null)
     {
         if ($file instanceof \SplFileInfo) {
             return $file->getPathname();
         }
 
-        return $file ? $file : null;
+        return $file ?: null;
     }
 
     /**
-     * @param int $line
+     * @param null|int $line
      *
      * @return int|null
      */
-    final protected function compileLine($line)
+    final protected function compileLine($line = null)
     {
         return is_int($line) ? $line : null;
     }
 
     /**
-     * @param null|\Exception|\Throwable $throwable
+     * @param null|\Throwable|\Exception|\Error $throwable
      *
-     * @return null|\Exception|\Throwable
+     * @return null|\Throwable|\Exception|\Error
      */
     final protected function compilePrevious($throwable = null)
     {
