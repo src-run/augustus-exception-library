@@ -12,6 +12,7 @@
 
 namespace SR\Exception;
 
+use SR\Polyfill\Php70\Assert;
 use SR\Utility\ClassInspect;
 
 /**
@@ -31,18 +32,19 @@ trait ExceptionTrait
 
     /**
      * @param string|null $message
-     * @param mixed,...   $parameters
+     * @param mixed ,...   $parameters
      */
     final public function __construct($message = null, ...$parameters)
     {
         $this->setAttributes([]);
 
-        list($replacements, $previous) = $this->parseParameters($parameters);
+        $replacements = $this->filterReplacementParameters($parameters);
+        $throwable = $this->filterFirstThrowableParameter($parameters);
 
         parent::__construct(
             $this->compileMessage($message, ...$replacements),
             $this->compileCode(null),
-            $this->compilePrevious(array_pop($previous))
+            $this->compilePrevious($throwable)
         );
     }
 
@@ -70,7 +72,7 @@ trait ExceptionTrait
             'line' => $this->getLine(),
         ];
 
-        return (string) print_r((array) $stringSet, true);
+        return print_r((array) $stringSet, true);
     }
 
     /**
@@ -78,7 +80,7 @@ trait ExceptionTrait
      */
     final public function __debugInfo()
     {
-        return (array) [
+        return [
             'type' => $this->getType(true),
             'text' => $this->getMessage(),
             'code' => $this->getCode(),
@@ -136,7 +138,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param mixed,... ...$parameters
+     * @param {...,mixed,mixed[]} ...$parameters
      *
      * @return $this
      */
@@ -157,8 +159,8 @@ trait ExceptionTrait
     }
 
     /**
-     * @param string    $message
-     * @param mixed,... $replacements
+     * @param string              $message
+     * @param {...,mixed,mixed[]} $replacements
      *
      * @return $this
      */
@@ -206,13 +208,13 @@ trait ExceptionTrait
     }
 
     /**
-     * @param \Throwable $exception
+     * @param \Throwable|\Exception $throwable
      *
      * @return $this
      */
-    final public function setPrevious(\Throwable $exception)
+    final public function setPrevious($throwable)
     {
-        $this->__construct($this->messageOriginal ?: $this->getMessage(), $exception);
+        $this->__construct($this->messageOriginal ?: $this->getMessage(), $throwable);
 
         return $this;
     }
@@ -238,44 +240,44 @@ trait ExceptionTrait
     }
 
     /**
-     * @param mixed      $value
-     * @param null|mixed $index
+     * @param mixed      $attribute
+     * @param null|mixed $key
      *
      * @return $this
      */
-    final public function addAttribute($value, $index = null)
+    final public function addAttribute($attribute, $key = null)
     {
-        if ($index === null || empty($index)) {
-            $this->attributes[] = $value;
+        if ($key === null || empty($key)) {
+            $this->attributes[] = $attribute;
         } else {
-            $this->attributes[$index] = $value;
+            $this->attributes[$key] = $attribute;
         }
 
         return $this;
     }
 
     /**
-     * @param string $index
+     * @param string $key
      *
      * @return null|mixed
      */
-    final public function getAttribute($index)
+    final public function getAttribute($key)
     {
-        if (!$this->hasAttribute($index)) {
+        if (!$this->hasAttribute($key)) {
             return null;
         }
 
-        return $this->attributes[$index];
+        return $this->attributes[$key];
     }
 
     /**
-     * @param string $index
+     * @param string $key
      *
      * @return bool
      */
-    final public function hasAttribute($index)
+    final public function hasAttribute($key)
     {
-        return (bool) isset($this->attributes[$index]);
+        return (bool) isset($this->attributes[$key]);
     }
 
     /**
@@ -295,19 +297,20 @@ trait ExceptionTrait
     }
 
     /**
-     * @param false|bool $fqcn
+     * @param false|bool $qualified
      *
      * @return string
      */
-    final public function getType($fqcn = false)
+    final public function getType($qualified = false)
     {
-        return $fqcn ? ClassInspect::getNameQualified(get_called_class()) :
-            ClassInspect::getNameShort(get_called_class());
+        $class = get_called_class();
+
+        return $qualified ?
+            ClassInspect::getNameQualified($class) :
+            ClassInspect::getNameShort($class);
     }
 
     /**
-     * @internal
-     *
      * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
      *
      * @return mixed[]
@@ -315,15 +318,13 @@ trait ExceptionTrait
     final protected function filterReplacementParameters(array $parameters = [])
     {
         $replacements = array_filter($parameters, function ($param) {
-            return ! ($param instanceof \Throwable || $param instanceof \Exception || $param instanceof \Error);
+            return !Assert::throwableEquitable($param);
         });
 
         return $replacements;
     }
 
     /**
-     * @internal
-     *
      * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
      *
      * @return \Throwable[]|\Exception[]|\Error[]
@@ -331,15 +332,13 @@ trait ExceptionTrait
     final protected function filterThrowableParameters(array $parameters = [])
     {
         $throwables = array_filter($parameters, function ($param) {
-            return ($param instanceof \Throwable || $param instanceof \Exception || $param instanceof \Error);
+            return Assert::throwableEquitable($param);
         });
 
         return $throwables;
     }
 
     /**
-     * @internal
-     *
      * @param \Throwable[]|\Exception[]|\Error[]|mixed[] $parameters
      *
      * @return \Throwable|\Exception|\Error
@@ -356,8 +355,6 @@ trait ExceptionTrait
     }
 
     /**
-     * @internal
-     *
      * @param null|string $message
      * @param mixed,...   $replacements
      *
@@ -379,8 +376,6 @@ trait ExceptionTrait
     }
 
     /**
-     * @internal
-     *
      * @param int|null $code
      *
      * @return int
@@ -391,8 +386,6 @@ trait ExceptionTrait
     }
 
     /**
-     * @internal
-     *
      * @param string|\SplFileInfo $file
      *
      * @return string|null
@@ -407,8 +400,6 @@ trait ExceptionTrait
     }
 
     /**
-     * @internal
-     *
      * @param int $line
      *
      * @return int|null
@@ -419,15 +410,13 @@ trait ExceptionTrait
     }
 
     /**
-     * @internal
-     *
-     * @param null|\Exception|\Throwable $e
+     * @param null|\Exception|\Throwable $throwable
      *
      * @return null|\Exception|\Throwable
      */
-    final protected function compilePrevious($e = null)
+    final protected function compilePrevious($throwable = null)
     {
-        return ($e instanceof \Throwable || $e instanceof \Exception) ? $e : null;
+        return Assert::throwableEquitable($throwable) ? $throwable : null;
     }
 }
 

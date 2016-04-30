@@ -15,84 +15,57 @@ namespace SR\Exception;
 /**
  * Interface ExceptionInterface.
  */
-interface ExceptionInterface
+interface ExceptionInterface extends \Throwable
 {
     /**
-     * Generic exception message. Should be avoided.
-     *
      * @var string
      */
-    const MSG_GENERIC = 'An undefined exception was thrown. %s';
+    const MSG_GENERIC = 'Unspecified exception.';
 
     /**
-     * Exception code for an unknown/undefined state.
-     *
      * @var int
      */
-    const CODE_UNKNOWN = -10;
+    const CODE_GENERIC = -1;
 
     /**
-     * Generic exception code for...absolutely generic, unspecified exceptions.
-     *
-     * @var int
+     * @var string
      */
-    const CODE_GENERIC = -5;
+    const MSG_BAD_FUNCTION_CALL = 'Invalid function call.';
 
     /**
-     * Generic exception code for exceptions thrown from within Wonka library.
-     *
      * @var int
      */
-    const CODE_GENERIC_FROM_LIBRARY = 1000;
+    const CODE_BAD_FUNCTION_CALL = 1001;
 
     /**
-     * Generic exception code for exceptions thrown from within Wonka bundle.
-     *
-     * @var int
+     * @var string
      */
-    const CODE_GENERIC_FROM_BUNDLE = 2000;
+    const MSG_INVALID_ARGUMENT = 'Invalid argument.';
 
     /**
-     * Exception code for generic invalid arguments exception.
-     *
      * @var int
      */
-    const CODE_INVALID_ARGS = 50;
+    const CODE_INVALID_ARGUMENT = '1002';
 
     /**
-     * Exception code for an invalid style being passed by user.
-     *
-     * @var int
+     * @var string
      */
-    const CODE_INVALID_STYLE = 51;
+    const MSG_LOGIC = 'Logic error.';
 
     /**
-     * Exception code for generic missing arguments.
-     *
      * @var int
      */
-    const CODE_MISSING_ARGS = 100;
+    const CODE_LOGIC = 1003;
 
     /**
-     * Exception code for a missing entity.
-     *
-     * @var int
+     * @var string
      */
-    const CODE_MISSING_ENTITY = 101;
+    const MSG_RUNTIME = 'Runtime error.';
 
     /**
-     * Exception code for an unknown/missing service.
-     *
      * @var int
      */
-    const CODE_MISSING_SERVICE = 201;
-
-    /**
-     * Exception code for an inconsistent fixture data error.
-     *
-     * @var int
-     */
-    const CODE_FIXTURE_DATA_INCONSISTENT = 735;
+    const CODE_RUNTIME = 1004;
 
     /**
      * @param string|null $message
@@ -179,11 +152,11 @@ interface ExceptionInterface
     public function setLine($line);
 
     /**
-     * @param \Exception $exception
+     * @param \Throwable|\Exception $thowable
      *
      * @return $this
      */
-    public function setPrevious(\Exception $exception);
+    public function setPrevious($thowable);
 
     /**
      * @param array $attributes
@@ -193,12 +166,12 @@ interface ExceptionInterface
     public function setAttributes(array $attributes = []);
 
     /**
-     * @param mixed       $value
-     * @param null|string $index
+     * @param mixed       $attribute
+     * @param null|string $key
      *
      * @return $this
      */
-    public function addAttribute($value, $index = null);
+    public function addAttribute($attribute, $key = null);
 
     /**
      * @return array
@@ -206,18 +179,18 @@ interface ExceptionInterface
     public function getAttributes();
 
     /**
-     * @param string $index
+     * @param string $key
      *
      * @return null|mixed
      */
-    public function getAttribute($index);
+    public function getAttribute($key);
 
     /**
-     * @param string $index
+     * @param string $key
      *
      * @return bool
      */
-    public function hasAttribute($index);
+    public function hasAttribute($key);
 
     /**
      * @return array
@@ -225,11 +198,11 @@ interface ExceptionInterface
     public function getTraceLimited();
 
     /**
-     * @param false|bool $fqcn
+     * @param false|bool $qualified
      *
      * @return string
      */
-    public function getType($fqcn = false);
+    public function getType($qualified = false);
 }
 
 /* EOF */

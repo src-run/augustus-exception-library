@@ -55,7 +55,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = new LogicException('A %s.', 'message');
         static::assertEquals('A message.', $e->getMessage());
-        static::assertEquals(ExceptionInterface::CODE_GENERIC, $e->getCode());
+        static::assertEquals(ExceptionInterface::CODE_LOGIC, $e->getCode());
 
         $e = new LogicException();
         static::assertNotNull($e->getMessage());
@@ -66,7 +66,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = new BadFunctionCallException('A %s.', 'message');
         static::assertEquals('A message.', $e->getMessage());
-        static::assertEquals(ExceptionInterface::CODE_GENERIC, $e->getCode());
+        static::assertEquals(ExceptionInterface::CODE_BAD_FUNCTION_CALL, $e->getCode());
 
         $e = new BadFunctionCallException();
         static::assertNotNull($e->getMessage());
