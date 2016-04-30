@@ -1,6 +1,6 @@
 root = true
 
-[**.{php,md,twig,xml}]
+[*]
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
@@ -8,10 +8,5 @@ indent_style = space
 indent_size = 4
 charset = utf-8
 
-[**.{js|css|scss|less|yml|json}]
-end_of_line = lf
-insert_final_newline = true
-trim_trailing_whitespace = true
-indent_style = space
+[*.{js|css|scss|less|yml|json}]
 indent_size = 2
-charset = utf-8
