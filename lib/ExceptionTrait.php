@@ -12,7 +12,6 @@
 
 namespace SR\Exception;
 
-use SR\Reflection\Inspect;
 use SR\Utility\ClassInspect;
 
 /**
@@ -50,9 +49,11 @@ trait ExceptionTrait
     final public static function create($message = null, ...$parameters)
     {
         $instance = new static($message, ...$parameters);
+        $reflects = new \ReflectionObject($instance);
 
-        $reassignMethod = Inspect::this($instance)->getMethod('reassignProperties');
-        $reassignMethod->invoke($instance);
+        $method = $reflects->getMethod('reassignTargetOnStaticConstruct');
+        $method->setAccessible(true);
+        $method->invoke($instance);
 
         return $instance;
     }
@@ -287,20 +288,22 @@ trait ExceptionTrait
         }, $message);
     }
 
-    final private function reassignProperties()
+    final private function reassignTargetOnStaticConstruct()
     {
         $stack = array_slice($this->getTrace(), 1);
 
         if (isset($stack[0]['class']) && isset($stack[0]['function'])) {
-            $object = Inspect::thisClass($stack[0]['class']);
+            $object = new \ReflectionClass($stack[0]['class']);
             $method = $object->getMethod($stack[0]['function']);
+            $self = new \ReflectionObject($this);
 
-            $self = Inspect::this($this);
             $file = $self->getProperty('file');
-            $line = $self->getProperty('line');
+            $file->setAccessible(true);
+            $file->setValue($this, $object->getFileName());
 
-            $file->setValue($this, $object->file()->getPathname());
-            $line->setValue($this, $method->lineStart());
+            $line = $self->getProperty('line');
+            $line->setAccessible(true);
+            $line->setValue($this, $method->getStartLine());
         }
     }
 }

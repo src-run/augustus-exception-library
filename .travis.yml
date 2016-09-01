@@ -26,7 +26,7 @@ install :
   - bash .bldr/bldr -b up-app -q
 
 script :
-  - vendor/phpunit/phpunit/phpunit -vvv
+  - bin/phpunit -vvv
 
 after_script :
   - bash .bldr/bldr -b down-app -q
