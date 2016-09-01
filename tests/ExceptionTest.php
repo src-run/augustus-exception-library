@@ -79,6 +79,12 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
 
         $exception->message('Second string with number: "%d"', 100);
         $this->assertEquals('Second string with number: "100"', $exception->getMessage());
+
+        $exception->message('Second string with number "%04d" and undefined string "%s"', 100);
+        $this->assertEquals('Second string with number "0100" and undefined string "<string:undefined>"', $exception->getMessage());
+
+        $exception->message('Second string with undefined number "%04d" and undefined string "%s"');
+        $this->assertEquals('Second string with undefined number "<integer:undefined>" and undefined string "<string:undefined>"', $exception->getMessage());
     }
 
     public function testCreate()

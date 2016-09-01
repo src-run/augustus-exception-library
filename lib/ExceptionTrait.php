@@ -25,13 +25,6 @@ trait ExceptionTrait
     protected $attributes = [];
 
     /**
-     * {@inheritdoc}
-     *
-     * @var string
-     */
-    protected $message;
-
-    /**
      * @param null|string $message
      * @param mixed       ...$parameters
      */
@@ -228,12 +221,9 @@ trait ExceptionTrait
     {
         $message = $message ?: ExceptionInterface::DEFAULT_MESSAGE;
         $replace = $this->filterReplacements($replacements);
+        $cleaned = $this->cleanupMessage($message, count($replace));
 
-        if (0 === count($replace) || null === ($compiled = @vsprintf($message, $replace))) {
-            return $this->cleanupMessage($message);
-        }
-
-        return $this->cleanupMessage($compiled);
+        return !($compiled = @vsprintf($cleaned, $replace)) ? $this->cleanupMessage($message, 0) : $compiled;
     }
 
     /**
@@ -278,14 +268,40 @@ trait ExceptionTrait
 
     /**
      * @param string $message
+     * @param int    $count
      *
      * @return string
      */
-    final private function cleanupMessage($message)
+    final private function cleanupMessage($message, $count)
     {
-        return preg_replace_callback('{%[0-9ds][0-9]?(?:\$[0-9]?[0-9]?[a-z]?)?}i', function () {
-            return '<undefined>';
+        $iteration = 0;
+
+        return preg_replace_callback('{%([0-9-]+)?([sducoxXbgGeEfF])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}', function ($matches) use ($count, &$iteration) {
+            return ++$iteration > $count ? '<'.$this->placeholderType($matches[2]).':undefined>' : $matches[0];
         }, $message);
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return string
+     */
+    final private function placeholderType($type)
+    {
+        $str = 'unknown-type';
+        $map = [
+            'string' => ['s'],
+            'integer' => ['d', 'u', 'c', 'o', 'x', 'X', 'b'],
+            'double' => ['g', 'G', 'e', 'E', 'f', 'F']
+        ];
+
+        foreach ($map as $name => $values) {
+            if (in_array($type, $values)) {
+                $str = $name;
+            }
+        }
+
+        return  $str;
     }
 
     final private function reassignTargetOnStaticConstruct()
