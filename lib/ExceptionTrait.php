@@ -169,13 +169,13 @@ trait ExceptionTrait
     final public function __toArray()
     {
         return [
-            'type'       => $this->getType(true),
-            'message'    => $this->getMessage(),
-            'fileName'   => $this->getFile(),
-            'fileLine'   => $this->getLine(),
-            'code'       => $this->getCode(),
+            'type' => $this->getType(true),
+            'message' => $this->getMessage(),
+            'fileName' => $this->getFile(),
+            'fileLine' => $this->getLine(),
+            'code' => $this->getCode(),
             'attributes' => $this->getAttributes(),
-            'traceable'  => function () {
+            'traceable' => function () {
                 return $this->getTrace();
             },
         ];
@@ -290,9 +290,9 @@ trait ExceptionTrait
     {
         $str = 'unknown-type';
         $map = [
-            'string'  => ['s'],
+            'string' => ['s'],
             'integer' => ['d', 'u', 'c', 'o', 'x', 'X', 'b'],
-            'double'  => ['g', 'G', 'e', 'E', 'f', 'F']
+            'double' => ['g', 'G', 'e', 'E', 'f', 'F'],
         ];
 
         foreach ($map as $name => $values) {
