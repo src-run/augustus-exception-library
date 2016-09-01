@@ -12,9 +12,7 @@
 
 namespace SR\Exception\Tests;
 
-use SR\Exception\ExceptionInterface;
 use SR\Exception\ExceptionTrait;
-use SR\Exception\LogicException;
 
 /**
  * Class ExceptionTraitTest.
