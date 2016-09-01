@@ -25,12 +25,6 @@ interface ExceptionInterface extends \Throwable
     /**
      * @param null|string $message
      * @param mixed       ...$parameters
-     */
-    public function __construct($message = null, ...$parameters);
-
-    /**
-     * @param null|string $message
-     * @param mixed       ...$parameters
      *
      * @return static
      */
