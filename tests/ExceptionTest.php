@@ -24,73 +24,68 @@ use SR\Exception\RuntimeException;
  */
 class ExceptionTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @param string $message
+     * @param array  $replacements
+     *
+     * @return Exception
+     */
+    private function getException($message = 'A test exception', array $replacements = [])
+    {
+        return new Exception($message, ...$replacements);
+    }
+
     public function testDefaults()
     {
-        $e = new Exception('A %s.', 'message');
-        static::assertEquals('A message.', $e->getMessage());
-        static::assertEquals(ExceptionInterface::CODE_GENERIC, $e->getCode());
+        $exception = $this->getException('A %s.', ['message']);
+        $this->assertEquals('A message.', $exception->getMessage());
 
-        $e = new Exception();
-        static::assertNotNull($e->getMessage());
-        static::assertNotNull($e->getCode());
+        $exception = $this->getException();
+        $this->assertNotNull($exception->getMessage());
+        $this->assertNotNull($exception->getCode());
     }
 
-    public function testPrevious()
+    public function testToString()
     {
-        $p = new Exception();
-        $e = new Exception(null, $p);
+        $exception = $this->getException();
+        $attributes = [
+            'index-01' => 'value-01',
+            'index-02' => 'value-02',
+        ];
 
-        static::assertArraySubset(['back' => []], $e->__debugInfo());
-        static::assertSame($p, $e->getPrevious());
+        $this->assertRegExp('{Exception \'Exception\' with message \'A test exception\' in}', $exception->__toString());
+
+        $exception->attributes($attributes);
+        $this->assertRegExp('{with attributes \'\[index-01\]=value-01, \[index-02\]=value-02\'}', $exception->__toString());
     }
 
-    public function testMessageReplacementPlaceholderCleanup()
+    public function testType()
     {
-        $e = new Exception('A message with (%s) unused placeholders %s everywhere %d$01d and %s$s');
-
-        static::assertSame('A message with (<null>) unused placeholders <null> everywhere <null> and <null>', $e->getMessage());
+        $this->assertRegExp('{^Exception$}', $this->getException()->getType());
     }
 
-    public function testLogicException()
+    public function testTypeQualified()
     {
-        $e = new LogicException('A %s.', 'message');
-        static::assertEquals('A message.', $e->getMessage());
-        static::assertEquals(ExceptionInterface::CODE_LOGIC, $e->getCode());
+        $exception = $this->getException();
 
-        $e = new LogicException();
-        static::assertNotNull($e->getMessage());
-        static::assertNotNull($e->getCode());
+        $this->assertNotRegExp('{^Exception$}', $exception->getType(true));
+        $this->assertRegExp('{Exception$}', $exception->getType(true));
     }
 
-    public function testBadFunctionCallException()
+    public function testCompileMessage()
     {
-        $e = new BadFunctionCallException('A %s.', 'message');
-        static::assertEquals('A message.', $e->getMessage());
-        static::assertEquals(ExceptionInterface::CODE_BAD_FUNCTION_CALL, $e->getCode());
+        $exception = $this->getException('A %s with number: "%d"', ['string', 10]);
+        $this->assertEquals('A string with number: "10"', $exception->getMessage());
 
-        $e = new BadFunctionCallException();
-        static::assertNotNull($e->getMessage());
-        static::assertNotNull($e->getCode());
+        $exception->message('Second string with number: "%d"', 100);
+        $this->assertEquals('Second string with number: "100"', $exception->getMessage());
     }
 
-    public function testRuntimeException()
+    public function testCreate()
     {
-        $e = new RuntimeException('A %s.', 'message');
-        static::assertEquals('A message.', $e->getMessage());
+        $exception = Exception::create();
 
-        $e = new RuntimeException();
-        static::assertNotNull($e->getMessage());
-        static::assertNotNull($e->getCode());
-    }
-
-    public function testInvalidArgumentException()
-    {
-        $e = new InvalidArgumentException('A %s.', 'message');
-        static::assertEquals('A message.', $e->getMessage());
-
-        $e = new InvalidArgumentException();
-        static::assertNotNull($e->getMessage());
-        static::assertNotNull($e->getCode());
+        $this->assertRegExp('{ExceptionTest.php$}', $exception->getFile());
     }
 }
 

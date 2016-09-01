@@ -18,22 +18,6 @@ namespace SR\Exception;
 class BadFunctionCallException extends \BadFunctionCallException implements ExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_BAD_FUNCTION_CALL;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_BAD_FUNCTION_CALL;
-    }
 }
 
 /* EOF */

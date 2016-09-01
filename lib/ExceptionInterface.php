@@ -20,52 +20,13 @@ interface ExceptionInterface extends \Throwable
     /**
      * @var string
      */
-    const MSG_GENERIC = 'Unspecified exception.';
+    const DEFAULT_MESSAGE = 'An undefined error occured!';
 
     /**
-     * @var int
+     * @param null|string $message
+     * @param mixed       ...$parameters
      */
-    const CODE_GENERIC = -1;
-
-    /**
-     * @var string
-     */
-    const MSG_BAD_FUNCTION_CALL = 'Invalid function call.';
-
-    /**
-     * @var int
-     */
-    const CODE_BAD_FUNCTION_CALL = 1001;
-
-    /**
-     * @var string
-     */
-    const MSG_INVALID_ARGUMENT = 'Invalid argument.';
-
-    /**
-     * @var int
-     */
-    const CODE_INVALID_ARGUMENT = '1002';
-
-    /**
-     * @var string
-     */
-    const MSG_LOGIC = 'Logic error.';
-
-    /**
-     * @var int
-     */
-    const CODE_LOGIC = 1003;
-
-    /**
-     * @var string
-     */
-    const MSG_RUNTIME = 'Runtime error.';
-
-    /**
-     * @var int
-     */
-    const CODE_RUNTIME = 1004;
+    public function __construct($message = null, ...$parameters);
 
     /**
      * @param null|string $message
@@ -76,61 +37,11 @@ interface ExceptionInterface extends \Throwable
     public static function create($message = null, ...$parameters);
 
     /**
-     * @return string
-     */
-    public function __toString();
-
-    /**
-     * @return mixed[]
-     */
-    public function __debugInfo();
-
-    /**
-     * @return string
-     */
-    public function getMessage();
-
-    /**
-     * @return int
-     */
-    public function getCode();
-
-    /**
-     * @return string
-     */
-    public function getFile();
-
-    /**
-     * @return int
-     */
-    public function getLine();
-
-    /**
-     * @return null|\Throwable|\Exception|\Error
-     */
-    public function getPrevious();
-
-    /**
-     * @return mixed[]
-     */
-    public function getTrace();
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage();
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode();
-
-    /**
-     * @param mixed ...$parameters
+     * @param bool $qualified
      *
-     * @return $this
+     * @return string
      */
-    public function with(...$parameters);
+    public function getType($qualified = false);
 
     /**
      * @param string $message
@@ -138,42 +49,14 @@ interface ExceptionInterface extends \Throwable
      *
      * @return $this
      */
-    public function setMessage($message, ...$replacements);
-
-    /**
-     * @param int $code
-     *
-     * @return $this
-     */
-    public function setCode($code);
-
-    /**
-     * @param string|\SplFileInfo $file
-     *
-     * @return $this
-     */
-    public function setFile($file);
-
-    /**
-     * @param int $line
-     *
-     * @return $this
-     */
-    public function setLine($line);
-
-    /**
-     * @param null|\Exception|\Throwable|\Error $throwable
-     *
-     * @return $this
-     */
-    public function setPrevious($throwable);
+    public function message($message, ...$replacements);
 
     /**
      * @param mixed[] $attributes
      *
      * @return $this
      */
-    public function setAttributes(array $attributes = []);
+    public function attributes(array $attributes = []);
 
     /**
      * @return mixed[]
@@ -181,38 +64,36 @@ interface ExceptionInterface extends \Throwable
     public function getAttributes();
 
     /**
-     * @param mixed       $attribute
-     * @param null|string $key
+     * @return bool
+     */
+    public function hasAttributes();
+
+    /**
+     * @param string $index
+     * @param mixed  $value
      *
      * @return $this
      */
-    public function addAttribute($attribute, $key = null);
+    public function attribute($index, $value);
 
     /**
-     * @param string $key
+     * @param string $index
      *
-     * @return null|mixed
+     * @return mixed
      */
-    public function getAttribute($key);
+    public function getAttribute($index);
 
     /**
-     * @param string $key
+     * @param string $index
      *
      * @return bool
      */
-    public function hasAttribute($key);
+    public function hasAttribute($index);
 
     /**
      * @return mixed[]
      */
-    public function getTraceLimited();
-
-    /**
-     * @param false|bool $qualified
-     *
-     * @return string
-     */
-    public function getType($qualified = false);
+    public function __toArray();
 }
 
 /* EOF */

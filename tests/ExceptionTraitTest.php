@@ -22,143 +22,53 @@ use SR\Exception\LogicException;
 class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var ExceptionTrait|ExceptionInterface
+     * @return ExceptionTrait|\PHPUnit_Framework_MockObject_MockObject
      */
-    protected static $e;
-
-    /**
-     * @return ExceptionTrait|ExceptionInterface
-     */
-    public function setUp()
-    {
-        static::$e = $this->makeMock();
-
-        parent::setUp();
-    }
-
-    /**
-     * @return ExceptionTrait|ExceptionInterface
-     */
-    public function makeMock()
+    public function getExceptionTrait()
     {
         return $this->getMockBuilder('SR\Exception\ExceptionTrait')
             ->disableOriginalConstructor()
             ->getMockForTrait();
     }
 
-    /**
-     * @param string $message
-     * @param mixed  $parameter
-     *
-     * @return LogicException
-     */
-    public function makeMockForLogicExcepeption($message, $parameter)
+    public function testToArray()
     {
-        return new LogicException($message, $parameter);
+        $array = $this->getExceptionTrait()->__toArray();
+
+        foreach (['type', 'message', 'fileName', 'fileLine', 'code', 'attributes', 'traceable'] as $key) {
+            $this->assertArrayHasKey($key, $array);
+        }
     }
 
-    public function testToString()
+    public function testHasAndSetAndGetAttributes()
     {
-        static::assertStringStartsWith('Array', static::$e->__toString());
-    }
-
-    public function testDebugOutput()
-    {
-        static::assertArraySubset(['back' => []], static::$e->__debugInfo());
-    }
-
-    public function testType()
-    {
-        static::assertRegExp('{^Mock_Trait_ExceptionTrait_.+}', static::$e->getType());
-    }
-
-    public function testGetMessageSprintf()
-    {
-        $e = $this->makeMockForLogicExcepeption(null, null);
-        $e->setMessage('A %s string with number "%d".', 'test', 10);
-        static::assertEquals('A test string with number "10".', $e->getMessage());
-    }
-
-    public function testMessageInConstructorAndWithForParameters()
-    {
-        $previous = new \Exception();
-        $string = 'A test %s with %d number.';
-
-        $e = LogicException::create($string)->with($previous, 'string', 10);
-
-        static::assertEquals('A test string with 10 number.', $e->getMessage());
-    }
-
-    public function testSetAttributes()
-    {
-        $a = [
-            'index-string' => 'value 01',
-            'numeric index',
+        $exception = $this->getExceptionTrait();
+        $attributes = [
+            'index-01' => 'value-01',
+            'index-02' => 'value-02',
         ];
 
-        static::$e->setAttributes($a);
-        static::assertEquals($a, static::$e->getAttributes());
+        $this->assertFalse($exception->hasAttributes());
+        $exception->attributes($attributes);
+
+        $this->assertTrue($exception->hasAttributes());
+        $this->assertSame($attributes, $exception->getAttributes());
     }
 
-    public function testAddAttribute()
+    public function testHasAndSetAndGetAttribute()
     {
-        $a = ['index-string' => 'value 01'];
-        $b = ['numeric-index-value'];
+        $exception = $this->getExceptionTrait();
+        $attributes = [
+            'index-01' => 'value-01',
+            'index-02' => 'value-02',
+        ];
 
-        static::$e->addAttribute(current($a), key($a));
-        static::assertEquals($a, static::$e->getAttributes());
-        static::$e->addAttribute(current($b));
-        static::assertEquals(array_merge($a, $b), static::$e->getAttributes());
-        static::assertTrue(static::$e->hasAttribute(key($a)));
-        static::assertSame(current($a), static::$e->getAttribute(key($a)));
-        static::assertFalse(static::$e->hasAttribute('invalid-attribute'));
-        static::assertNull(static::$e->getAttribute('invalid-attribute'));
-    }
-
-    public function testCodeAndMessageDefaults()
-    {
-        $e = static::$e;
-
-        static::assertSame(ExceptionInterface::CODE_GENERIC, $e->getDefaultCode());
-        static::assertSame(ExceptionInterface::MSG_GENERIC, $e->getDefaultMessage());
-    }
-
-    public function testSetterAndGetterMethods()
-    {
-        $e = $this->makeMockForLogicExcepeption('Custom string %s', __METHOD__);
-        static::assertSame(sprintf('Custom string %s', __METHOD__), $e->getMessage());
-
-        $e = $this->makeMockForLogicExcepeption(null, 'idk');
-
-        $message = 'A brand new message for the test method %s.';
-        $method = __METHOD__;
-        $code = mt_rand(100, 999);
-        $file = __FILE__;
-        $line = __LINE__;
-
-        $e
-            ->setMessage($message, $method)
-            ->setCode($code)
-            ->setFile($file)
-            ->setLine($line);
-
-        static::assertEquals(sprintf($message, $method), $e->getMessage());
-        static::assertEquals($code, $e->getCode());
-        static::assertEquals($line, $e->getLine());
-        static::assertEquals($file, $e->getFile());
-
-        $e2 = LogicException::create('This one from %s test case has %d exceptions passed with replacements.', __METHOD__, 1, $e);
-
-        static::assertSame($e, $e2->getPrevious());
-
-        $e->setPrevious($e2);
-
-        static::assertSame($e2, $e->getPrevious());
-
-        $splFile = new \SplFileInfo(__FILE__);
-        $e->setFile($splFile);
-
-        static::assertEquals($splFile->getPathname(), $e->getFile());
+        foreach ($attributes as $i => $v) {
+            $this->assertFalse($exception->hasAttribute($i));
+            $exception->attribute($i, $v);
+            $this->assertSame($v, $exception->getAttribute($i));
+            $this->assertTrue($exception->hasAttribute($i));
+        }
     }
 }
 
