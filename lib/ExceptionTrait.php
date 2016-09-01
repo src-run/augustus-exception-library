@@ -12,6 +12,7 @@
 
 namespace SR\Exception;
 
+use SR\Reflection\Inspect;
 use SR\Utility\ClassInspect;
 
 /**
@@ -22,12 +23,14 @@ trait ExceptionTrait
     /**
      * @var mixed[]
      */
-    protected $attributes;
+    protected $attributes = [];
 
     /**
-     * @var string|null
+     * {@inheritdoc}
+     *
+     * @var string
      */
-    protected $messageOriginal;
+    protected $message;
 
     /**
      * @param null|string $message
@@ -35,16 +38,7 @@ trait ExceptionTrait
      */
     final public function __construct($message = null, ...$parameters)
     {
-        $this->setAttributes([]);
-
-        $replacements = $this->filterReplacementParameters($parameters);
-        $throwable = $this->filterFirstThrowableParameter($parameters);
-
-        parent::__construct(
-            $this->compileMessage($message, ...$replacements),
-            $this->compileCode(null),
-            $this->compilePrevious($throwable)
-        );
+        parent::__construct($this->compileMessage($message, $parameters), 0, $this->filterThrowables($parameters));
     }
 
     /**
@@ -55,165 +49,35 @@ trait ExceptionTrait
      */
     final public static function create($message = null, ...$parameters)
     {
-        return new static($message, ...$parameters);
+        $instance = new static($message, ...$parameters);
+
+        $reassignMethod = Inspect::this($instance)->getMethod('reassignProperties');
+        $reassignMethod->invoke($instance);
+
+        return $instance;
     }
 
     /**
-     * @return string
-     */
-    final public function __toString()
-    {
-        $stringSet = [
-            'type' => $this->getType(true),
-            'text' => $this->getMessage(),
-            'code' => $this->getCode(),
-            'file' => $this->getFile(),
-            'line' => $this->getLine(),
-        ];
-
-        return print_r((array) $stringSet, true);
-    }
-
-    /**
-     * @return mixed[]
-     */
-    final public function __debugInfo()
-    {
-        return [
-            'type' => $this->getType(true),
-            'text' => $this->getMessage(),
-            'code' => $this->getCode(),
-            'file' => $this->getFile(),
-            'line' => $this->getLine(),
-            'more' => $this->getAttributes(),
-            'back' => $this->getTraceLimited(),
-        ];
-    }
-
-    /**
-     * @return string
-     */
-    abstract public function getMessage();
-
-    /**
-     * @return int
-     */
-    abstract public function getCode();
-
-    /**
-     * @return string
-     */
-    abstract public function getFile();
-
-    /**
-     * @return int
-     */
-    abstract public function getLine();
-
-    /**
-     * @return null|\Throwable|\Exception|\Error
-     */
-    abstract public function getPrevious();
-
-    /**
-     * @return mixed[]
-     */
-    abstract public function getTrace();
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_GENERIC;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_GENERIC;
-    }
-
-    /**
-     * @param mixed ...$parameters
+     * @param bool $qualified
      *
-     * @return $this
+     * @return string
      */
-    final public function with(...$parameters)
+    final public function getType($qualified = false)
     {
-        $replacements = $this->filterReplacementParameters($parameters);
-        $throwable = $this->filterFirstThrowableParameter($parameters);
-
-        if ($throwable !== null) {
-            $this->setPrevious($throwable);
-        }
-
-        if (count($replacements) > 0) {
-            $this->setMessage($this->messageOriginal, ...$replacements);
-        }
-
-        return $this;
+        return $qualified ? static::class : ClassInspect::getNameShort(static::class);
     }
 
     /**
+     * {@inheritdoc}
+     *
      * @param string $message
      * @param mixed  ...$replacements
      *
      * @return $this
      */
-    final public function setMessage($message, ...$replacements)
+    final public function message($message, ...$replacements)
     {
-        $this->message = $this->compileMessage($message, ...$replacements);
-
-        return $this;
-    }
-
-    /**
-     * @param int $code
-     *
-     * @return $this
-     */
-    final public function setCode($code)
-    {
-        $this->code = $this->compileCode($code);
-
-        return $this;
-    }
-
-    /**
-     * @param string|\SplFileInfo $file
-     *
-     * @return $this
-     */
-    final public function setFile($file)
-    {
-        $this->file = $this->compileFile($file);
-
-        return $this;
-    }
-
-    /**
-     * @param int $line
-     *
-     * @return $this
-     */
-    final public function setLine($line)
-    {
-        $this->line = $this->compileLine($line);
-
-        return $this;
-    }
-
-    /**
-     * @param null|\Exception|\Throwable|\Error $throwable
-     *
-     * @return $this
-     */
-    final public function setPrevious($throwable)
-    {
-        $this->__construct($this->messageOriginal ?: $this->getMessage(), $throwable);
+        $this->message = $this->compileMessage($message, $replacements);
 
         return $this;
     }
@@ -223,7 +87,7 @@ trait ExceptionTrait
      *
      * @return $this
      */
-    final public function setAttributes(array $attributes = [])
+    final public function attributes(array $attributes = [])
     {
         $this->attributes = $attributes;
 
@@ -235,187 +99,209 @@ trait ExceptionTrait
      */
     final public function getAttributes()
     {
-        return (array) $this->attributes;
+        return $this->attributes;
     }
 
     /**
-     * @param mixed       $attribute
-     * @param null|string $key
+     * @return bool
+     */
+    final public function hasAttributes()
+    {
+        return count($this->attributes) !== 0;
+    }
+
+    /**
+     * @param string $index
+     * @param mixed  $value
      *
      * @return $this
      */
-    final public function addAttribute($attribute, $key = null)
+    final public function attribute($index, $value)
     {
-        if ($key === null || empty($key)) {
-            $this->attributes[] = $attribute;
-        } else {
-            $this->attributes[$key] = $attribute;
-        }
+        $this->attributes[$index] = $value;
 
         return $this;
     }
 
     /**
-     * @param string $key
+     * @param string $index
      *
      * @return null|mixed
      */
-    final public function getAttribute($key)
+    final public function getAttribute($index)
     {
-        if (!$this->hasAttribute($key)) {
-            return null;
-        }
-
-        return $this->attributes[$key];
+        return $this->hasAttribute($index) ? $this->attributes[(string) $index] : null;
     }
 
     /**
-     * @param string $key
+     * @param string $index
      *
      * @return bool
      */
-    final public function hasAttribute($key)
+    final public function hasAttribute($index)
     {
-        return (bool) isset($this->attributes[$key]);
+        return array_key_exists((string) $index, $this->attributes) && !empty($this->attributes[(string) $index]);
     }
 
     /**
-     * @return mixed[]
-     */
-    final public function getTraceLimited()
-    {
-        $trace = (array) $this->getTrace();
-
-        array_walk($trace, function (&$t) {
-            array_walk($t['args'], function (&$a) {
-                $a = is_object($a) ? get_class($a) : $a;
-            });
-        });
-
-        return (array) $trace;
-    }
-
-    /**
-     * @param bool $qualified
+     * {@inheritdoc}
      *
      * @return string
      */
-    final public function getType($qualified = false)
+    final public function __toString()
     {
-        $class = get_called_class();
+        $string = vsprintf('Exception \'%s\' with message \'%s\' in %s:%d', [
+            $this->getType(false),
+            $this->getMessage(),
+            $this->getFile(),
+            $this->getLine(),
+        ]);
 
-        return $qualified ?
-            ClassInspect::getNameQualified($class) :
-            ClassInspect::getNameShort($class);
-    }
-
-    /**
-     * @param mixed[] $parameters
-     *
-     * @return mixed[]
-     */
-    final protected function filterReplacementParameters(array $parameters = [])
-    {
-        $replacements = array_filter($parameters, function ($param) {
-            return !ClassInspect::isThrowableEquitable($param);
-        });
-
-        return $replacements;
-    }
-
-    /**
-     * @param mixed[] $parameters
-     *
-     * @return \Throwable[]|\Exception[]|\Error[]
-     */
-    final protected function filterThrowableParameters(array $parameters = [])
-    {
-        $throwables = array_filter($parameters, function ($param) {
-            return ClassInspect::isThrowableEquitable($param);
-        });
-
-        return $throwables;
-    }
-
-    /**
-     * @param mixed[] $parameters
-     *
-     * @return \Throwable|\Exception|\Error
-     */
-    final protected function filterFirstThrowableParameter(array $parameters = [])
-    {
-        $throwables = $this->filterThrowableParameters($parameters);
-
-        if (count($throwables) !== 0) {
-            return array_shift($throwables);
+        if (!$this->hasAttributes()) {
+            return $string;
         }
 
-        return null;
+        $attributes = $this->getAttributes();
+        array_walk($attributes, function (&$value, $index) {
+            $value = sprintf('[%s]=%s', $index, $this->toScalarRepresentation($value));
+        });
+
+        return sprintf('%s with attributes \'%s\'', $string, implode(', ', $attributes));
     }
+
+    /**
+     * @return mixed[]
+     */
+    final public function __toArray()
+    {
+        return [
+            'type'       => $this->getType(true),
+            'message'    => $this->getMessage(),
+            'fileName'   => $this->getFile(),
+            'fileLine'   => $this->getLine(),
+            'code'       => $this->getCode(),
+            'attributes' => $this->getAttributes(),
+            'traceable'  => function () {
+                return $this->getTrace();
+            },
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getMessage();
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getCode();
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getFile();
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getLine();
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getPrevious();
+
+    /**
+     * {@inheritdoc}
+     */
+    abstract public function getTrace();
 
     /**
      * @param null|string $message
-     * @param mixed       ...$replacements
+     * @param mixed[]     $replacements
      *
      * @return string
      */
-    final protected function compileMessage($message = null, ...$replacements)
+    final private function compileMessage($message, array $replacements)
     {
-        $this->messageOriginal = $message;
+        $message = $message ?: ExceptionInterface::DEFAULT_MESSAGE;
+        $replace = $this->filterReplacements($replacements);
 
-        $message = $message ?: $this->getDefaultMessage();
-
-        if (count($replacements) > 0) {
-            $message = @sprintf($message, ...$replacements) ?: $message;
+        if (0 === count($replace) || null === ($compiled = @vsprintf($message, $replace))) {
+            return $this->cleanupMessage($message);
         }
 
+        return $this->cleanupMessage($compiled);
+    }
+
+    /**
+     * @param mixed[] $parameters
+     *
+     * @return mixed[]
+     */
+    final private function filterReplacements(array $parameters)
+    {
+        $replacements = array_filter($parameters, function ($p) {
+            return ! ClassInspect::isThrowableEquitable($p);
+        });
+
+        return array_map(function ($replacement) {
+            return $this->toScalarRepresentation($replacement);
+        }, $replacements);
+    }
+
+    /**
+     * @param mixed[] $parameters
+     *
+     * @return \Throwable|null
+     */
+    final protected function filterThrowables(array $parameters)
+    {
+        $throwables = array_filter($parameters, function ($p) {
+            return ClassInspect::isThrowableEquitable($p);
+        });
+
+        return count($throwables) === 0 ? null : array_shift($throwables);
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return string
+     */
+    final private function toScalarRepresentation($value)
+    {
+        return is_scalar($value) ? $value : @var_export($value, true);
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return string
+     */
+    final private function cleanupMessage($message)
+    {
         return preg_replace_callback('{%[0-9ds][0-9]?(?:\$[0-9]?[0-9]?[a-z]?)?}i', function () {
-            return '<null>';
+            return '<undefined>';
         }, $message);
     }
 
-    /**
-     * @param null|int $code
-     *
-     * @return int
-     */
-    final protected function compileCode($code = null)
+    final private function reassignProperties()
     {
-        return $code !== null ? $code : $this->getDefaultCode();
-    }
+        $stack = array_slice($this->getTrace(), 1);
 
-    /**
-     * @param null|string|\SplFileInfo $file
-     *
-     * @return string|null
-     */
-    final protected function compileFile($file = null)
-    {
-        if ($file instanceof \SplFileInfo) {
-            return $file->getPathname();
+        if (isset($stack[0]['class']) && isset($stack[0]['function'])) {
+            $object = Inspect::thisClass($stack[0]['class']);
+            $method = $object->getMethod($stack[0]['function']);
+
+            $self = Inspect::this($this);
+            $file = $self->getProperty('file');
+            $line = $self->getProperty('line');
+
+            $file->setValue($this, $object->file()->getPathname());
+            $line->setValue($this, $method->lineStart());
         }
-
-        return $file ?: null;
-    }
-
-    /**
-     * @param null|int $line
-     *
-     * @return int|null
-     */
-    final protected function compileLine($line = null)
-    {
-        return is_int($line) ? $line : null;
-    }
-
-    /**
-     * @param null|\Throwable|\Exception|\Error $throwable
-     *
-     * @return null|\Throwable|\Exception|\Error
-     */
-    final protected function compilePrevious($throwable = null)
-    {
-        return ClassInspect::isThrowableEquitable($throwable) ? $throwable : null;
     }
 }
 

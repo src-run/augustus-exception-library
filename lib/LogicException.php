@@ -18,22 +18,6 @@ namespace SR\Exception;
 class LogicException extends \LogicException implements ExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_LOGIC;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_LOGIC;
-    }
 }
 
 /* EOF */

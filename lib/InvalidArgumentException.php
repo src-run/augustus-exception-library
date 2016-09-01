@@ -18,22 +18,6 @@ namespace SR\Exception;
 class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_INVALID_ARGUMENT;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_INVALID_ARGUMENT;
-    }
 }
 
 /* EOF */

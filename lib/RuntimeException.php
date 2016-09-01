@@ -18,22 +18,6 @@ namespace SR\Exception;
 class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_RUNTIME;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_RUNTIME;
-    }
 }
 
 /* EOF */
