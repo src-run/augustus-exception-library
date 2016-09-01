@@ -33,11 +33,14 @@ class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
 
     public function testToArray()
     {
-        $array = $this->getExceptionTrait()->__toArray();
+        $exception = $this->getExceptionTrait();
+        $array = $exception->__toArray();
 
         foreach (['type', 'message', 'fileName', 'fileLine', 'code', 'attributes', 'traceable'] as $key) {
             $this->assertArrayHasKey($key, $array);
         }
+
+        $this->assertSame($exception->getTrace(), $array['traceable']());
     }
 
     public function testHasAndSetAndGetAttributes()
