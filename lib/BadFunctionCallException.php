@@ -17,15 +17,6 @@ namespace SR\Exception;
 class BadFunctionCallException extends \BadFunctionCallException implements ExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * @param null|string $message
-     * @param mixed       ...$parameters
-     */
-    final public function __construct($message = null, ...$parameters)
-    {
-        parent::__construct($this->compileMessage($message, $parameters), 0, $this->filterThrowables($parameters));
-    }
 }
 
 /* EOF */
