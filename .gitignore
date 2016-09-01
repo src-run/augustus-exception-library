@@ -61,4 +61,7 @@
 LICENSE
 README
 
+# PHP-CS-Fixer
+.php_cs.cache
+
 # EOF
