@@ -12,12 +12,7 @@
 
 namespace SR\Exception\Tests;
 
-use SR\Exception\BadFunctionCallException;
 use SR\Exception\Exception;
-use SR\Exception\ExceptionInterface;
-use SR\Exception\InvalidArgumentException;
-use SR\Exception\LogicException;
-use SR\Exception\RuntimeException;
 
 /**
  * Class ExceptionTest.

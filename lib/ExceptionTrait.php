@@ -234,7 +234,7 @@ trait ExceptionTrait
     final private function filterReplacements(array $parameters)
     {
         $replacements = array_filter($parameters, function ($p) {
-            return ! ClassInspect::isThrowableEquitable($p);
+            return !ClassInspect::isThrowableEquitable($p);
         });
 
         return array_map(function ($replacement) {
@@ -290,9 +290,9 @@ trait ExceptionTrait
     {
         $str = 'unknown-type';
         $map = [
-            'string' => ['s'],
+            'string'  => ['s'],
             'integer' => ['d', 'u', 'c', 'o', 'x', 'X', 'b'],
-            'double' => ['g', 'G', 'e', 'E', 'f', 'F']
+            'double'  => ['g', 'G', 'e', 'E', 'f', 'F']
         ];
 
         foreach ($map as $name => $values) {
