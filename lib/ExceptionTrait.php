@@ -317,7 +317,7 @@ trait ExceptionTrait
     final protected function filterReplacementParameters(array $parameters = [])
     {
         $replacements = array_filter($parameters, function ($param) {
-            return ! ClassInspect::isThrowableEquitable($param);
+            return !ClassInspect::isThrowableEquitable($param);
         });
 
         return $replacements;
