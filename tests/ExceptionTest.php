@@ -32,7 +32,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     public function testDefaults()
     {
         $exception = $this->getException('A %s.', ['message']);
-        $this->assertEquals('A message.', $exception->getMessage());
+        $this->assertSame('A message.', $exception->getMessage());
 
         $exception = $this->getException();
         $this->assertNotNull($exception->getMessage());
@@ -47,10 +47,10 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
             'index-02' => 'value-02',
         ];
 
-        $this->assertRegExp('{Exception \'Exception\' with message \'A test exception\' in}', $exception->__toString());
+        $this->assertRegExp('{Exception "Exception" with message "A test exception" in "}', $exception->__toString());
 
-        $exception->attributes($attributes);
-        $this->assertRegExp('{with attributes \'\[index-01\]=value-01, \[index-02\]=value-02\'}', $exception->__toString());
+        $exception->setAttributes($attributes);
+        $this->assertRegExp('{with attributes "\[index-01\]=value-01, \[index-02\]=value-02"}', $exception->__toString());
     }
 
     public function testType()
@@ -69,16 +69,19 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     public function testCompileMessage()
     {
         $exception = $this->getException('A %s with number: "%d"', ['string', 10]);
-        $this->assertEquals('A string with number: "10"', $exception->getMessage());
+        $this->assertSame('A string with number: "10"', $exception->getMessage());
 
-        $exception->message('Second string with number: "%d"', 100);
-        $this->assertEquals('Second string with number: "100"', $exception->getMessage());
+        $exception->setMessage('Second string with number: "%d"', 100);
+        $this->assertSame('Second string with number: "100"', $exception->getMessage());
 
-        $exception->message('Second string with number "%04d" and undefined string "%s"', 100);
-        $this->assertEquals('Second string with number "0100" and undefined string "<string:undefined>"', $exception->getMessage());
+        $exception->setMessage('Second string with number "%04d" and undefined string "%s"', 100);
+        $this->assertSame('Second string with number "0100" and undefined string "<string:null>"', $exception->getMessage());
 
-        $exception->message('Second string with undefined number "%04d" and undefined string "%s"');
-        $this->assertEquals('Second string with undefined number "<integer:undefined>" and undefined string "<string:undefined>"', $exception->getMessage());
+        $exception->setMessage('Second string with undefined number "%04d" and undefined string "%s"');
+        $this->assertSame('Second string with undefined number "<integer:null>" and undefined string "<string:null>"', $exception->getMessage());
+
+        $exception->setMessage('Second string with number "%d" and string "%s"', 1, 'bar', 'foo-bar');
+        $this->assertSame('Second string with number "1" and string "bar"', $exception->getMessage());
     }
 
     public function testCreate()
@@ -86,6 +89,18 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
         $exception = Exception::create();
 
         $this->assertRegExp('{ExceptionTest.php$}', $exception->getFile());
+    }
+
+    public function testToArray()
+    {
+        $exception = new Exception();
+        $exported = $exception->__toArray();
+
+        foreach (['type', 'class', 'message', 'file', 'line', 'code', 'attributes', 'traceable'] as $key) {
+            $this->assertArrayHasKey($key, $exported);
+        }
+
+        $this->assertSame($exception->getTrace(), $exported['traceable']());
     }
 }
 

@@ -12,11 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class Exception.
+ * A generic exception class.
  */
-class Exception extends \Exception implements ExceptionInterface
+class Exception extends AbstractException
 {
-    use ExceptionTrait;
 }
 
 /* EOF */

@@ -12,11 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class InvalidArgumentException.
+ * An invalid argument exception class.
  */
-class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
+class InvalidArgumentException extends AbstractException
 {
-    use ExceptionTrait;
 }
 
 /* EOF */

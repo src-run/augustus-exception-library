@@ -11,45 +11,33 @@
 
 namespace SR\Exception\Tests;
 
-use SR\Exception\ExceptionTrait;
+use SR\Exception\AbstractException;
 
 /**
  * Class ExceptionTraitTest.
  */
-class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
+class AbstractExceptionTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @return ExceptionTrait|\PHPUnit_Framework_MockObject_MockObject
+     * @return AbstractException|\PHPUnit_Framework_MockObject_MockObject
      */
-    public function getExceptionTrait()
+    public function createAbstractExceptionMock()
     {
-        return $this->getMockBuilder('SR\Exception\ExceptionTrait')
+        return $this->getMockBuilder(AbstractException::class)
             ->disableOriginalConstructor()
-            ->getMockForTrait();
-    }
-
-    public function testToArray()
-    {
-        $exception = $this->getExceptionTrait();
-        $array = $exception->__toArray();
-
-        foreach (['type', 'message', 'fileName', 'fileLine', 'code', 'attributes', 'traceable'] as $key) {
-            $this->assertArrayHasKey($key, $array);
-        }
-
-        $this->assertSame($exception->getTrace(), $array['traceable']());
+            ->getMockForAbstractClass();
     }
 
     public function testHasAndSetAndGetAttributes()
     {
-        $exception = $this->getExceptionTrait();
+        $exception = $this->createAbstractExceptionMock();
         $attributes = [
             'index-01' => 'value-01',
             'index-02' => 'value-02',
         ];
 
         $this->assertFalse($exception->hasAttributes());
-        $exception->attributes($attributes);
+        $exception->setAttributes($attributes);
 
         $this->assertTrue($exception->hasAttributes());
         $this->assertSame($attributes, $exception->getAttributes());
@@ -57,7 +45,7 @@ class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
 
     public function testHasAndSetAndGetAttribute()
     {
-        $exception = $this->getExceptionTrait();
+        $exception = $this->createAbstractExceptionMock();
         $attributes = [
             'index-01' => 'value-01',
             'index-02' => 'value-02',

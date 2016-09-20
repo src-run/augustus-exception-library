@@ -12,11 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class RuntimeException.
+ * A runtime exception class.
  */
-class RuntimeException extends \RuntimeException implements ExceptionInterface
+class RuntimeException extends AbstractException
 {
-    use ExceptionTrait;
 }
 
 /* EOF */

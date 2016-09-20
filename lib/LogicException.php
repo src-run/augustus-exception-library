@@ -12,11 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class LogicException.
+ * A logic exception class.
  */
-class LogicException extends \LogicException implements ExceptionInterface
+class LogicException extends AbstractException
 {
-    use ExceptionTrait;
 }
 
 /* EOF */

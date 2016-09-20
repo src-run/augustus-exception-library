@@ -12,11 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class BadFunctionCallException.
+ * A bad function call exception class.
  */
-class BadFunctionCallException extends \BadFunctionCallException implements ExceptionInterface
+class BadFunctionCallException extends AbstractException
 {
-    use ExceptionTrait;
 }
 
 /* EOF */
