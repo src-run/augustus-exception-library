@@ -20,7 +20,7 @@
   ],
   "require": {
     "php": "~7.0",
-    "src-run/augustus-utility-library": "~0.6"
+    "src-run/augustus-utility-library": "~0.7"
   },
   "require-dev": {
     "codacy/coverage": "~1.0",

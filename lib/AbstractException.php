@@ -10,8 +10,7 @@
  */
 
 namespace SR\Exception;
-
-use SR\Utility\ClassInspect;
+use SR\Util\Info\ClassInfo;
 
 /**
  * The base, abstract exception class used by all concrete implementations.
@@ -70,7 +69,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function getType(bool $fqcn = false) : string
     {
-        return $fqcn ? static::class : ClassInspect::getNameShort(static::class);
+        return $fqcn ? static::class : ClassInfo::getNameShort(static::class);
     }
 
     /**
@@ -258,7 +257,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     final private function filterNotThrowable(array $from) : array
     {
         $to = array_filter($from, function ($value) {
-            return !ClassInspect::isThrowableEquitable($value);
+            return !ClassInfo::isThrowableEquitable($value);
         });
 
         return array_map(function ($value) {
@@ -277,7 +276,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     final protected function filterOneThrowable(array $from)
     {
         $to = array_filter($from, function ($p) {
-            return ClassInspect::isThrowableEquitable($p);
+            return ClassInfo::isThrowableEquitable($p);
         });
 
         return count($to) === 0 ? null : array_shift($to);
