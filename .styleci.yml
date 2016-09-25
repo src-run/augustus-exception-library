@@ -1,24 +1,24 @@
 ---
 
-#
-# This file is part of the `src-run/augustus-exception-library` project.
-#
-# (c) Rob Frawley 2nd <rmf@src.run>
-#
-# For the full copyright and license information, view the LICENSE.md
-# file distributed with this source code.
-#
+preset: symfony
 
-preset   : symfony
-enabled  : ["short_array_syntax", "phpdoc_order"]
-disabled : ["simplified_null_return"]
+enabled:
+  - combine_consecutive_unsets
+  - linebreak_after_opening_tag
+  - no_short_echo_tag
+  - ordered_imports
+  - phpdoc_order
+  - php_unit_construct
+  - php_unit_dedicate_assert
+  - php_unit_strict
+  - short_array_syntax
+
+disabled:
+  - simplified_null_return
 
 finder :
-  exclude : ["tests"]
-  name    : ["*.php"]
-  path    : ["lib", "src"]
-
-# EOF
+  name    : [ '*.php' ]
+  exclude : [ 'vendor', 'var' ]
+  path    : [ '.' ]
 
 ...
-

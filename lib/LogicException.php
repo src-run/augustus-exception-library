@@ -4,7 +4,6 @@
  * This file is part of the `src-run/augustus-exception-library` project.
  *
  * (c) Rob Frawley 2nd <rmf@src.run>
- * (c) Scribe Inc      <scr@src.run>
  *
  * For the full copyright and license information, please view the LICENSE.md
  * file that was distributed with this source code.
@@ -13,27 +12,10 @@
 namespace SR\Exception;
 
 /**
- * Class LogicException.
+ * A logic exception class.
  */
-class LogicException extends \LogicException implements ExceptionInterface
+class LogicException extends AbstractException
 {
-    use ExceptionTrait;
-
-    /**
-     * @return string
-     */
-    public function getDefaultMessage()
-    {
-        return ExceptionInterface::MSG_LOGIC;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultCode()
-    {
-        return ExceptionInterface::CODE_LOGIC;
-    }
 }
 
 /* EOF */
