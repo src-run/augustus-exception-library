@@ -61,20 +61,20 @@ class ExceptionTypesTest extends \PHPUnit_Framework_TestCase
     public function getTypes()
     {
         return [
-            [BadFunctionCallException::class,],
-            [BadMethodCallException::class,],
-            [DomainException::class,],
-            [InvalidArgumentException::class,],
-            [LengthException::class,],
-            [LogicException::class,],
-            [OutOfRangeException::class,],
-            [OutOfBoundsException::class,],
-            [OverflowException::class,],
-            [RangeException::class,],
-            [RuntimeException::class,],
-            [UnderflowException::class,],
-            [UnexpectedValueException::class,],
-            [Exception::class,],
+            [BadFunctionCallException::class],
+            [BadMethodCallException::class],
+            [DomainException::class],
+            [InvalidArgumentException::class],
+            [LengthException::class],
+            [LogicException::class],
+            [OutOfRangeException::class],
+            [OutOfBoundsException::class],
+            [OverflowException::class],
+            [RangeException::class],
+            [RuntimeException::class],
+            [UnderflowException::class],
+            [UnexpectedValueException::class],
+            [Exception::class],
         ];
     }
 
