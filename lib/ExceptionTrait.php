@@ -59,7 +59,7 @@ trait ExceptionTrait
      *
      * @return $this
      */
-    final public function message($message, ...$replacements)
+    final public function setMessage($message, ...$replacements)
     {
         $this->message = $this->compileMessage($message, $replacements);
 
@@ -71,7 +71,7 @@ trait ExceptionTrait
      *
      * @return $this
      */
-    final public function attributes(array $attributes = [])
+    final public function setAttributes(array $attributes = [])
     {
         $this->attributes = $attributes;
 
@@ -100,7 +100,7 @@ trait ExceptionTrait
      *
      * @return $this
      */
-    final public function attribute($index, $value)
+    final public function setAttribute($index, $value)
     {
         $this->attributes[$index] = $value;
 

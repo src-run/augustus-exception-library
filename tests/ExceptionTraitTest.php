@@ -49,7 +49,7 @@ class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
         ];
 
         $this->assertFalse($exception->hasAttributes());
-        $exception->attributes($attributes);
+        $exception->setAttributes($attributes);
 
         $this->assertTrue($exception->hasAttributes());
         $this->assertSame($attributes, $exception->getAttributes());
@@ -65,7 +65,7 @@ class ExceptionTraitTest extends \PHPUnit_Framework_TestCase
 
         foreach ($attributes as $i => $v) {
             $this->assertFalse($exception->hasAttribute($i));
-            $exception->attribute($i, $v);
+            $exception->setAttribute($i, $v);
             $this->assertSame($v, $exception->getAttribute($i));
             $this->assertTrue($exception->hasAttribute($i));
         }

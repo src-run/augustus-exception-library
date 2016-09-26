@@ -49,14 +49,14 @@ interface ExceptionInterface extends \Throwable
      *
      * @return $this
      */
-    public function message($message, ...$replacements);
+    public function setMessage($message, ...$replacements);
 
     /**
      * @param mixed[] $attributes
      *
      * @return $this
      */
-    public function attributes(array $attributes = []);
+    public function setAttributes(array $attributes = []);
 
     /**
      * @return mixed[]
@@ -74,7 +74,7 @@ interface ExceptionInterface extends \Throwable
      *
      * @return $this
      */
-    public function attribute($index, $value);
+    public function setAttribute($index, $value);
 
     /**
      * @param string $index
