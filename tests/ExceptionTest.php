@@ -29,6 +29,24 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
         return new Exception($message, ...$replacements);
     }
 
+    public function testGetMethod()
+    {
+        $exception = $this->getException();
+        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethod());
+    }
+
+    public function testGetClass()
+    {
+        $exception = $this->getException();
+        $this->assertSame(__CLASS__, $exception->getContextClass());
+    }
+
+    public function testFileDiff()
+    {
+        $exception = $this->getException('A %s.', ['message']);
+        var_dump($exception->getContextFileSnippet(6));
+    }
+
     public function testDefaults()
     {
         $exception = $this->getException('A %s.', ['message']);
@@ -47,15 +65,18 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
             'index-02' => 'value-02',
         ];
 
-        $this->assertRegExp('{Exception "Exception" with message "A test exception" in "}', $exception->__toString());
+        $this->assertRegExp('{Exception: A test exception \(in "[^"]+" at "[^"]+"}', $exception->__toString());
 
-        $exception->setAttributes($attributes);
-        $this->assertRegExp('{with attributes "\[index-01\]=value-01, \[index-02\]=value-02"}', $exception->__toString());
+        foreach ($attributes as $i => $a) {
+            $exception->setAttribute($i, $a);
+        }
+        $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $exception->__toString());
     }
 
     public function testType()
     {
         $this->assertRegExp('{^Exception$}', $this->getException()->getType());
+        $this->assertRegExp('{^SR\\\}', $this->getException()->getType(true));
     }
 
     public function testTypeQualified()
@@ -96,11 +117,18 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
         $exception = new Exception();
         $exported = $exception->__toArray();
 
-        foreach (['type', 'class', 'message', 'file', 'line', 'code', 'attributes', 'traceable'] as $key) {
+        foreach (['type', 'message', 'code', 'class', 'method', 'file-name', 'file-line', 'file-diff', 'attributes', 'traceable'] as $key) {
             $this->assertArrayHasKey($key, $exported);
         }
 
         $this->assertSame($exception->getTrace(), $exported['traceable']());
+    }
+
+    public function testPrevious()
+    {
+        $exception = new Exception('', $previous = new Exception());
+
+        $this->assertSame($previous, $exception->getPrevious());
     }
 }
 

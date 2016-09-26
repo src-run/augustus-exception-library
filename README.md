@@ -1,9 +1,9 @@
 
 # [src-run] augustus-exception-library
 
-|       Travis-CI        |      Codacy Rating      |      Code Coverage      |        Style-CI         |
-|:----------------------:|:-----------------------:|:-----------------------:|:-----------------------:|
-| [![Travis](https://src.run/augustus-exception-library/travis.svg)](https://src.run/augustus-exception-library/travis) | [![Codacy](https://src.run/augustus-exception-library/codacy.svg)](https://src.run/augustus-exception-library/codacy) | [![Coveralls](https://src.run/augustus-exception-library/coveralls.svg)](https://src.run/augustus-exception-library/coveralls) | [![Coveralls](https://src.run/augustus-exception-library/styleci.svg)](https://src.run/augustus-exception-library/styleci) |
+|       Travis-CI        |      Codacy Rating      |      Code Coverage      |        Style-CI         |         Release         |    API Documentation    |
+|:----------------------:|:-----------------------:|:-----------------------:|:-----------------------:|:-----------------------:|:-----------------------:|
+| [![Travis](https://src.run/augustus-exception-library/travis.svg)](https://src.run/augustus-exception-library/travis) | [![Codacy](https://src.run/augustus-exception-library/codacy.svg)](https://src.run/augustus-exception-library/codacy) | [![Coveralls](https://src.run/augustus-exception-library/coveralls.svg)](https://src.run/augustus-exception-library/coveralls) | [![Coveralls](https://src.run/augustus-exception-library/styleci.svg)](https://src.run/augustus-exception-library/styleci) | [![Packagist](https://src.run/augustus-exception-library/packagist.svg)](https://src.run/augustus-exception-library/packagist) | [![API Docs](https://src.run/augustus-exception-library/api.svg)](https://src.run/augustus-exception-library/api) | 
 
 
 ## Overview
@@ -11,7 +11,7 @@
 [Welcome](https://src.run/go/readme_welcome)!
 The `src-run/augustus-exception-library` package provides the following
 
-> core exception base class with fluent API, as well as a set of exceptions built to utilize this and replace core-engine exceptions
+> Core exception class implementations with advanced context information and built-in string replacement functionality.
 
 ### Grouping
 
@@ -116,5 +116,4 @@ information.
 | __Stable Release__ | [![Packagist](https://src.run/augustus-exception-library/packagist.svg)](https://src.run/augustus-exception-library/packagist)     |
 | __Dev Release__    | [![Packagist](https://src.run/augustus-exception-library/packagist_pre.svg)](https://src.run/augustus-exception-library/packagist) |
 | __License__        | [![License](https://src.run/augustus-exception-library/license.svg)](https://src.run/augustus-exception-library/license)           |
-| __Reference__      | [![License](https://src.run/augustus-exception-library/api.svg)](https://src.run/augustus-exception-library/api)                   |
 

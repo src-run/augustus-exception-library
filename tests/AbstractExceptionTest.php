@@ -28,21 +28,6 @@ class AbstractExceptionTest extends \PHPUnit_Framework_TestCase
             ->getMockForAbstractClass();
     }
 
-    public function testHasAndSetAndGetAttributes()
-    {
-        $exception = $this->createAbstractExceptionMock();
-        $attributes = [
-            'index-01' => 'value-01',
-            'index-02' => 'value-02',
-        ];
-
-        $this->assertFalse($exception->hasAttributes());
-        $exception->setAttributes($attributes);
-
-        $this->assertTrue($exception->hasAttributes());
-        $this->assertSame($attributes, $exception->getAttributes());
-    }
-
     public function testHasAndSetAndGetAttribute()
     {
         $exception = $this->createAbstractExceptionMock();
@@ -53,7 +38,7 @@ class AbstractExceptionTest extends \PHPUnit_Framework_TestCase
 
         foreach ($attributes as $i => $v) {
             $this->assertFalse($exception->hasAttribute($i));
-            $exception->attribute($i, $v);
+            $exception->setAttribute($i, $v);
             $this->assertSame($v, $exception->getAttribute($i));
             $this->assertTrue($exception->hasAttribute($i));
         }

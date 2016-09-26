@@ -10,6 +10,9 @@
  */
 
 namespace SR\Exception;
+
+use SR\Silencer\CallSilencer;
+use SR\Util\Context\FileContext;
 use SR\Util\Info\ClassInfo;
 
 /**
@@ -20,7 +23,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     /**
      * @var mixed[]
      */
-    protected $attributes = [];
+    private $attributes = [];
 
     /**
      * @var string
@@ -28,12 +31,17 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     protected $message = null;
 
     /**
-     * @param null|string $message
-     * @param mixed       ...$parameters
+     * @var FileContext
      */
-    public function __construct(string $message = null, ...$parameters)
+    protected $context;
+
+    /**
+     * @param null|string $message
+     * @param mixed       ...$params
+     */
+    public function __construct(string $message = null, ...$params)
     {
-        parent::__construct($this->compileMessage($message, $parameters), 0, $this->filterOneThrowable($parameters));
+        parent::__construct($this->compileMessage($message ?: $this->defaultMessage(), $params), null, $this->compileThrown($params));
     }
 
     /**
@@ -42,7 +50,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @return ExceptionInterface
      */
-    public static function create(string $message = null, ...$parameters) : ExceptionInterface
+    final public static function create(string $message = null, ...$parameters) : ExceptionInterface
     {
         $object = new static($message, ...$parameters);
         $method = (new \ReflectionObject($object))->getMethod('doContextReassignmentOnStaticInstantiation');
@@ -53,23 +61,107 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     }
 
     /**
+     * Return string representation of exception.
+     *
      * @return string
      */
-    protected function getMessageDefault() : string
+    final public function __toString() : string
     {
-        return 'An unspecified exception was thrown during code execution';
+        list($context, $class, $method, $snippet) = $this->contextArray();
+
+        $message = vsprintf('%s: %s (in "%s" at "%s:%d").', [
+            $this->getType(false),
+            $this->getMessage(),
+            $method,
+            $this->getFile(),
+            $this->getLine(),
+        ]);
+
+        if (count($this->attributes) > 0) {
+            $message .= sprintf(' Attributes: %s', $this->attributesToString());
+        }
+
+        return $message;
+    }
+
+    /**
+     * Return array representation of exception.
+     *
+     * @return mixed[]
+     */
+    final public function __toArray() : array
+    {
+        list($context, $class, $method, $snippet) = $this->contextArray();
+
+        return [
+            'type' => $this->getType(true),
+            'message' => $this->getMessage(),
+            'code' => $this->getCode(),
+            'context' => $context,
+            'class' => $class,
+            'method' => $method,
+            'file-name' => $this->getFile(),
+            'file-line' => $this->getLine(),
+            'file-diff' => $snippet,
+            'attributes' => $this->getAttributes(),
+            'traceable' => function () {
+                return $this->getTrace();
+            },
+        ];
     }
 
     /**
      * Returns the exception type (class name) as either a fully-qualified class name or as just the class base name.
      *
-     * @param bool $fqcn
+     * @param bool $qualified
      *
      * @return string
      */
-    final public function getType(bool $fqcn = false) : string
+    final public function getType(bool $qualified = false) : string
     {
-        return $fqcn ? static::class : ClassInfo::getNameShort(static::class);
+        return $qualified ? static::class : ClassInfo::getNameShort(static::class);
+    }
+
+    /**
+     * Returns a file context class instance.
+     *
+     * @return FileContext
+     */
+    final public function getContext() : FileContext
+    {
+        return $this->initContext()->context;
+    }
+
+    /**
+     * Returns the class name of the thrown exception's context.
+     *
+     * @return string
+     */
+    final public function getContextClass() : string
+    {
+        return $this->getContext()->getClassName(true);
+    }
+
+    /**
+     * Returns the method name of the thrown exception's context.
+     *
+     * @return string
+     */
+    final public function getContextMethod() : string
+    {
+        return $this->getContext()->getMethodName(true);
+    }
+
+    /**
+     * Returns file lines for the line context.
+     *
+     * @param int $lines
+     *
+     * @return array|\string[]
+     */
+    final public function getContextFileSnippet(int $lines = 3) : array
+    {
+        return $this->getContext()->getFileContext($lines);
     }
 
     /**
@@ -77,49 +169,15 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      * parameter using {@see vsprintf}.
      *
      * @param string $message
-     * @param mixed  ...$replacements
+     * @param mixed  ...$params
      *
      * @return ExceptionInterface
      */
-    final public function setMessage(string $message = null, ...$replacements) : ExceptionInterface
+    final public function setMessage(string $message = null, ...$params) : ExceptionInterface
     {
-        $this->message = $this->compileMessage($message, $replacements);
+        $this->message = $this->compileMessage($message, $params);
 
         return $this;
-    }
-
-    /**
-     * Assign an array of attributes to the exception.
-     *
-     * @param mixed[] $attributes
-     *
-     * @return ExceptionInterface
-     */
-    final public function setAttributes(array $attributes = []) : ExceptionInterface
-    {
-        $this->attributes = $attributes;
-
-        return $this;
-    }
-
-    /**
-     * Returns an array of attributes.
-     *
-     * @return mixed[]
-     */
-    final public function getAttributes() : array
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * Returns true if any attributes exist.
-     *
-     * @return bool
-     */
-    final public function hasAttributes() : bool
-    {
-        return count($this->attributes) !== 0;
     }
 
     /**
@@ -130,7 +188,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @return ExceptionInterface
      */
-    final public function attribute(string $index, $value) : ExceptionInterface
+    final public function setAttribute(string $index, $value) : ExceptionInterface
     {
         $this->attributes[$index] = $value;
 
@@ -150,6 +208,16 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     }
 
     /**
+     * Returns the attributes array.
+     *
+     * @return array
+     */
+    final public function getAttributes() : array
+    {
+        return $this->attributes;
+    }
+
+    /**
      * Returns true if an attribute with the specified index exists.
      *
      * @param string $index The attribute index to search for
@@ -158,49 +226,44 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function hasAttribute(string $index) : bool
     {
-        return array_key_exists((string) $index, $this->attributes) && !empty($this->attributes[(string) $index]);
+        return isset($this->attributes[$index]) && !empty($this->attributes[$index]);
     }
 
     /**
-     * Return string representation of exception.
-     *
      * @return string
      */
-    final public function __toString() : string
+    protected function defaultMessage() : string
     {
-        $string = vsprintf('Exception "%s" with message "%s" in "%s" at line "%d"', [
-            $this->getType(false),
-            $this->getMessage(),
-            $this->getFile(),
-            $this->getLine(),
-        ]);
-
-        if ($this->hasAttributes()) {
-            $string .= sprintf(' with attributes "%s"', $this->getAttributesAsString());
-        }
-
-        return $string;
+        return 'An unspecified exception was thrown during code execution';
     }
 
     /**
-     * Return array representation of exception.
-     *
-     * @return mixed[]
+     * @return AbstractException
      */
-    final public function __toArray() : array
+    final private function initContext() : AbstractException
     {
-        return [
-            'type' => $this->getType(true),
-            'class' => $this->getType(false),
-            'message' => $this->getMessage(),
-            'file' => $this->getFile(),
-            'line' => $this->getLine(),
-            'code' => $this->getCode(),
-            'attributes' => $this->getAttributes(),
-            'traceable' => function () {
-                return $this->getTrace();
-            },
-        ];
+        if (!$this->context) {
+            $this->context = new FileContext($this->getFile(), $this->getLine());
+        }
+
+        return $this;
+    }
+
+    /**
+     * Handle "compilation" of the final previous exception by filtering the passed parameters for instances of \Throwable
+     * and returning the first instance found.
+     *
+     * @param mixed[] $params
+     *
+     * @return \Throwable|null
+     */
+    final private function compileThrown(array $params = [])
+    {
+        if (empty($thrown = $this->filterThrowable($params))) {
+            return null;
+        }
+
+        return array_shift($thrown);
     }
 
     /**
@@ -211,40 +274,39 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      * instead return the message string in its un-compiled form.
      *
      * @param null|string $message
-     * @param mixed[]     $replacements
+     * @param mixed[]     $replace
      *
      * @return string|null
      */
-    final private function compileMessage(string $message = null, array $replacements)
+    final private function compileMessage(string $message = null, array $replace = [])
     {
-        $message = $message ?: $this->getMessageDefault();
-        $replace = $this->filterNotThrowable($replacements);
+        $replace = $this->filterNotThrowable($replace);
 
-        if (false !== $compiled = $this->tryCompileMessage($message, $replace)) {
-            return $this->cleanupMessagePlaceholders($compiled);
-        }
-
-        $message = $this->cleanupMessagePlaceholders($message, count($replace));
-        $message = $this->tryCompileMessage($message, $replace) ?: $message;
-
-        return $this->cleanupMessagePlaceholders($message);
+        return $this->compileMessagePlaceholders($message, $replace, false) ?:
+            $this->compileMessagePlaceholders($message, $replace, true);
     }
 
     /**
      * Try to compile message with provided string and replacement array.
      *
-     * @param string  $message
-     * @param mixed[] $replacements
+     * @param string  $message The message string, which may contain placeholders for vsprintf
+     * @param mixed[] $replace Array of replacements for the string
+     * @param bool    $removes If true extra placeholders will be removed from the string such that the number of
+     *                         placeholders matches the number of replacements
      *
      * @return bool|string
      */
-    final private function tryCompileMessage(string $message, array $replacements)
+    final private function compileMessagePlaceholders(string $message, array $replace = [], $removes = false)
     {
-        if (!empty($compiled = @vsprintf($message, $replacements)) && $compiled) {
-            return $compiled;
-        }
+        $message = $removes ? $this->removePlaceholders($message, count($replace)) : $message;
 
-        return false;
+        $silence = new CallSilencer(function () use ($message, $replace) {
+            return vsprintf($message, $replace);
+        }, function ($ret) {
+            return $ret !== null && !empty($ret);
+        });
+
+        return $silence->invoke()->isResultValid() ? $silence->getResult() : false;
     }
 
     /**
@@ -271,15 +333,13 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @param mixed[] $from
      *
-     * @return \Throwable|null
+     * @return \Throwable[]
      */
-    final protected function filterOneThrowable(array $from)
+    final private function filterThrowable(array $from)
     {
-        $to = array_filter($from, function ($p) {
+        return array_filter($from, function ($p) {
             return ClassInfo::isThrowableEquitable($p);
         });
-
-        return count($to) === 0 ? null : array_shift($to);
     }
 
     /**
@@ -297,7 +357,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     /**
      * @return string
      */
-    final private function getAttributesAsString() : string
+    final private function attributesToString() : string
     {
         $attributes = $this->getAttributes();
 
@@ -317,7 +377,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @return string
      */
-    final private function cleanupMessagePlaceholders(string $message, int $startAt = 0) : string
+    final private function removePlaceholders(string $message, int $startAt = 0) : string
     {
         $regex = '{%([0-9-]+)?([sducoxXbgGeEfF])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}';
         $count = 0;
@@ -350,6 +410,28 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
         }
 
         return  $typeName;
+    }
+
+    /**
+     * @return mixed[]
+     */
+    final private function contextArray()
+    {
+        try {
+            return [
+                $this->getContext(),
+                $this->getContextClass(),
+                $this->getContextMethod(),
+                $this->getContextFileSnippet(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                null,
+                null,
+                null,
+                null,
+            ];
+        }
     }
 
     /**

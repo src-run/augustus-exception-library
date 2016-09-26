@@ -3,7 +3,7 @@
   "license": "MIT",
   "type": "library",
   "homepage": "https://src.run/augustus-exception-library",
-  "description": "core exception base class with fluent API, as well as a set of exceptions built to utilize this and replace core-engine exceptions",
+  "description": "Core exception class implementations with advanced context information and built-in string replacement functionality.",
   "support": {
     "email": "rmf@src.run",
     "issues": "https://src.run/augustus-exception-library/issues",

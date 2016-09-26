@@ -12,5 +12,5 @@ app_prep   : dep-composer
 app_post   : ~
 app_path   : ~
 pkg_name   : augustus-exception-library
-pkg_desc   : "core exception base class with fluent API, as well as a set of exceptions built to utilize this and replace core-engine exceptions"
+pkg_desc   : "Core exception class implementations with advanced context information and built-in string replacement functionality."
 pkg_bndl   : false
