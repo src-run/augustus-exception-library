@@ -321,7 +321,7 @@ trait ExceptionTrait
     final private function filterNotThrowable(array $from) : array
     {
         $to = array_filter($from, function ($value) {
-            return ! ClassInfo::isThrowableEquitable($value);
+            return !ClassInfo::isThrowableEquitable($value);
         });
 
         return array_map(function ($value) {
