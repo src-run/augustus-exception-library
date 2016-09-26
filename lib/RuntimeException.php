@@ -17,6 +17,15 @@ namespace SR\Exception;
 class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
     use ExceptionTrait;
+
+    /**
+     * @param null|string $message
+     * @param mixed       ...$parameters
+     */
+    final public function __construct($message = null, ...$parameters)
+    {
+        parent::__construct($this->compileMessage($message, $parameters), 0, $this->filterThrowables($parameters));
+    }
 }
 
 /* EOF */
