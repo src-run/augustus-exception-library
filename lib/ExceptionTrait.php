@@ -11,7 +11,7 @@
 
 namespace SR\Exception;
 
-use SR\Silencer\CallSilencer;
+use SR\Silencer\CallSilencerFactory;
 use SR\Util\Context\FileContext;
 use SR\Util\Context\FileContextInterface;
 use SR\Util\Info\ClassInfo;
@@ -298,15 +298,17 @@ trait ExceptionTrait
      */
     final private function compileMessagePlaceholders(string $message, array $replace = [], $removes = false)
     {
-        $message = $removes ? $this->removePlaceholders($message, count($replace)) : $message;
+        if ($removes) {
+            $message = $this->removePlaceholders($message, count($replace));
+        }
 
-        $silence = new CallSilencer(function () use ($message, $replace) {
+        $return = CallSilencerFactory::create(function () use ($message, $replace) {
             return vsprintf($message, $replace);
         }, function ($ret) {
             return $ret !== null && !empty($ret);
-        });
+        })->invoke();
 
-        return $silence->invoke()->isResultValid() ? $silence->getResult() : false;
+        return $return->isValid() ? $return->getReturn() : false;
     }
 
     /**
