@@ -319,7 +319,7 @@ trait ExceptionTrait
     final private function filterNotThrowable(array $from) : array
     {
         $to = array_filter($from, function ($value) {
-            return !ClassInfo::isThrowableEquitable($value);
+            return ! ClassInfo::isThrowableEquitable($value);
         });
 
         return array_map(function ($value) {
@@ -338,7 +338,7 @@ trait ExceptionTrait
     final private function filterThrowable(array $from)
     {
         return array_filter($from, function ($p) {
-            return ClassInfo::isThrowableEquitable($p);
+            return is_object($p) && ClassInfo::isThrowableEquitable($p);
         });
     }
 
