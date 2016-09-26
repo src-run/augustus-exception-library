@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when a given value does not match the expected set of values.
  */
-class Exception extends \Exception implements ExceptionInterface
+class UnexpectedValueException extends \UnexpectedValueException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
 

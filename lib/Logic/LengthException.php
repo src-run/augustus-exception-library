@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when a length is invalid.
  */
-class Exception extends \Exception implements ExceptionInterface
+class LengthException extends \LengthException implements LogicExceptionInterface
 {
     use ExceptionTrait;
 

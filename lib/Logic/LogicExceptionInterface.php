@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionInterface;
 
 /**
- * A logic exception class.
+ * Shared interface for logic-prefixed exceptions.
  */
-class LogicException extends AbstractException
+interface LogicExceptionInterface extends ExceptionInterface
 {
 }
 

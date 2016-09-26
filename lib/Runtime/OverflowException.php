@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when adding an element to a full "container".
  */
-class Exception extends \Exception implements ExceptionInterface
+class OverflowException extends \OverflowException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
 

@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be when an invalid string index is encountered.
  */
-class Exception extends \Exception implements ExceptionInterface
+class OutOfRangeException extends \OutOfRangeException implements LogicExceptionInterface
 {
     use ExceptionTrait;
 

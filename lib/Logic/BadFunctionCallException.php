@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used if an undefined or otherwise un-callable function reference is encountered.
  */
-class Exception extends \Exception implements ExceptionInterface
+class BadFunctionCallException extends \BadFunctionCallException implements LogicExceptionInterface
 {
     use ExceptionTrait;
 

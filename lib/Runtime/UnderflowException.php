@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when performing an invalid operation on an empty container (ex: removing an invalid element).
  */
-class Exception extends \Exception implements ExceptionInterface
+class UnderflowException extends \UnderflowException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
 

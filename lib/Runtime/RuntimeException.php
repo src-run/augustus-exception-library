@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when an error which can only be found on runtime is encountered.
  */
-class Exception extends \Exception implements ExceptionInterface
+class RuntimeException extends \RuntimeException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
 

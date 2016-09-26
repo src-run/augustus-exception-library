@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used if a value does not adhere to a defined data domain.
  */
-class Exception extends \Exception implements ExceptionInterface
+class DomainException extends \DomainException implements LogicExceptionInterface
 {
     use ExceptionTrait;
 

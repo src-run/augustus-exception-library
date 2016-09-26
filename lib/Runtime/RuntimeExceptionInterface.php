@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionInterface;
 
 /**
- * A bad function call exception class.
+ * Shared interface for runtime-prefixed exceptions.
  */
-class BadFunctionCallException extends AbstractException
+interface RuntimeExceptionInterface extends ExceptionInterface
 {
 }
 

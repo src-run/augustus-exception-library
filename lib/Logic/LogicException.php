@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Logic;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be used when an error in the program logic is encountered.
  */
-class Exception extends \Exception implements ExceptionInterface
+class LogicException extends \LogicException implements LogicExceptionInterface
 {
     use ExceptionTrait;
 

@@ -130,6 +130,47 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame($previous, $exception->getPrevious());
     }
+
+    public function testAttributes()
+    {
+        $exception = new Exception('', $previous = new Exception());
+        $attributes = [
+            'index-01' => 'value-01',
+            'index-02' => 'value-02',
+        ];
+
+        foreach ($attributes as $i => $v) {
+            $this->assertFalse($exception->hasAttribute($i));
+            $exception->setAttribute($i, $v);
+            $this->assertSame($v, $exception->getAttribute($i));
+            $this->assertTrue($exception->hasAttribute($i));
+        }
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject|Exception
+     */
+    public function getExceptionMock()
+    {
+        return $this->getMockBuilder(Exception::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+    }
+
+    public function testToStringExceptionNotThrownOnBadContext()
+    {
+        $exception = $this->getExceptionMock();
+        $exception->__construct('Mock exception');
+
+        $reflection = new \ReflectionObject($exception);
+        $property = $reflection->getProperty('file');
+        $property->setAccessible(true);
+        $property->setValue($exception, realpath(__DIR__.'/Fixtures/NoClass.php'));
+
+        $this->assertSame('unknown-class', $exception->getContextClass());
+        $this->assertSame('unknown-class::unknown-method', $exception->getContextMethod());
+        $this->assertCount(0, $exception->getContextFileSnippet());
+    }
 }
 
 /* EOF */

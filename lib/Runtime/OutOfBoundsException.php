@@ -9,12 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace SR\Exception;
+namespace SR\Exception\Runtime;
+
+use SR\Exception\ExceptionTrait;
 
 /**
- * Generic, base exception class.
+ * Intended to be when an invalid integer index is encountered.
  */
-class Exception extends \Exception implements ExceptionInterface
+class OutOfBoundsException extends \OutOfBoundsException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
 

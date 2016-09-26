@@ -13,12 +13,13 @@ namespace SR\Exception;
 
 use SR\Silencer\CallSilencer;
 use SR\Util\Context\FileContext;
+use SR\Util\Context\FileContextInterface;
 use SR\Util\Info\ClassInfo;
 
 /**
  * The base, abstract exception class used by all concrete implementations.
  */
-abstract class AbstractException extends \Exception implements ExceptionInterface
+trait ExceptionTrait
 {
     /**
      * @var mixed[]
@@ -31,24 +32,15 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     protected $message = null;
 
     /**
-     * @var FileContext
+     * @var FileContextInterface
      */
     protected $context;
 
     /**
      * @param null|string $message
-     * @param mixed       ...$params
-     */
-    public function __construct(string $message = null, ...$params)
-    {
-        parent::__construct($this->compileMessage($message ?: $this->defaultMessage(), $params), null, $this->compileThrown($params));
-    }
-
-    /**
-     * @param null|string $message
      * @param mixed       ...$parameters
      *
-     * @return ExceptionInterface
+     * @return ExceptionInterface|ExceptionTrait
      */
     final public static function create(string $message = null, ...$parameters) : ExceptionInterface
     {
@@ -67,12 +59,10 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function __toString() : string
     {
-        list($context, $class, $method, $snippet) = $this->contextArray();
-
         $message = vsprintf('%s: %s (in "%s" at "%s:%d").', [
             $this->getType(false),
             $this->getMessage(),
-            $method,
+            $this->getContextMethod(),
             $this->getFile(),
             $this->getLine(),
         ]);
@@ -91,18 +81,16 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function __toArray() : array
     {
-        list($context, $class, $method, $snippet) = $this->contextArray();
-
         return [
             'type' => $this->getType(true),
             'message' => $this->getMessage(),
             'code' => $this->getCode(),
-            'context' => $context,
-            'class' => $class,
-            'method' => $method,
+            'context' => $this->getContext(),
+            'class' => $this->getContextClass(),
+            'method' => $this->getContextMethod(),
             'file-name' => $this->getFile(),
             'file-line' => $this->getLine(),
-            'file-diff' => $snippet,
+            'file-diff' => $this->getContextFileSnippet(),
             'attributes' => $this->getAttributes(),
             'traceable' => function () {
                 return $this->getTrace();
@@ -125,9 +113,9 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     /**
      * Returns a file context class instance.
      *
-     * @return FileContext
+     * @return FileContextInterface|ExceptionTrait
      */
-    final public function getContext() : FileContext
+    final public function getContext() : FileContextInterface
     {
         return $this->initContext()->context;
     }
@@ -139,7 +127,11 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function getContextClass() : string
     {
-        return $this->getContext()->getClassName(true);
+        try {
+            return $this->getContext()->getClassName(true);
+        } catch (\RuntimeException $e) {
+            return 'unknown-class';
+        }
     }
 
     /**
@@ -149,7 +141,11 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function getContextMethod() : string
     {
-        return $this->getContext()->getMethodName(true);
+        try {
+            return $this->getContext()->getMethodName(true);
+        } catch (\RuntimeException $e) {
+            return 'unknown-class::unknown-method';
+        }
     }
 
     /**
@@ -161,7 +157,11 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final public function getContextFileSnippet(int $lines = 3) : array
     {
-        return $this->getContext()->getFileContext($lines);
+        try {
+            return $this->getContext()->getFileContext($lines);
+        } catch (\RuntimeException $e) {
+            return [];
+        }
     }
 
     /**
@@ -171,7 +171,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      * @param string $message
      * @param mixed  ...$params
      *
-     * @return ExceptionInterface
+     * @return ExceptionInterface|ExceptionTrait
      */
     final public function setMessage(string $message = null, ...$params) : ExceptionInterface
     {
@@ -186,7 +186,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      * @param string $index Index string
      * @param mixed  $value Value to set
      *
-     * @return ExceptionInterface
+     * @return ExceptionInterface|ExceptionTrait
      */
     final public function setAttribute(string $index, $value) : ExceptionInterface
     {
@@ -238,9 +238,9 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     }
 
     /**
-     * @return AbstractException
+     * @return ExceptionInterface|ExceptionTrait
      */
-    final private function initContext() : AbstractException
+    final private function initContext() : ExceptionInterface
     {
         if (!$this->context) {
             $this->context = new FileContext($this->getFile(), $this->getLine());
@@ -257,7 +257,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @return \Throwable|null
      */
-    final private function compileThrown(array $params = [])
+    final protected function compileThrown(array $params = [])
     {
         if (empty($thrown = $this->filterThrowable($params))) {
             return null;
@@ -278,7 +278,7 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      *
      * @return string|null
      */
-    final private function compileMessage(string $message = null, array $replace = [])
+    final protected function compileMessage(string $message = null, array $replace = [])
     {
         $replace = $this->filterNotThrowable($replace);
 
@@ -413,28 +413,6 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
     }
 
     /**
-     * @return mixed[]
-     */
-    final private function contextArray()
-    {
-        try {
-            return [
-                $this->getContext(),
-                $this->getContextClass(),
-                $this->getContextMethod(),
-                $this->getContextFileSnippet(),
-            ];
-        } catch (\Exception $e) {
-            return [
-                null,
-                null,
-                null,
-                null,
-            ];
-        }
-    }
-
-    /**
      * Special, private method is only called by static create method (using reflection). Since on static construction
      * the actual exception instance is created within this class, the exception object properties (such as file, line)
      * refer to this file instead of the calling context. This method interprets a trace araay to reassign properties
@@ -442,10 +420,11 @@ abstract class AbstractException extends \Exception implements ExceptionInterfac
      */
     final private function doContextReassignmentOnStaticInstantiation()
     {
-        $priorCallTrace = array_slice($this->getTrace(), 1);
-
-        if (count($priorCallTrace) > 0 && isset($priorCallTrace[0]['class']) && isset($priorCallTrace[0]['function'])) {
-            $this->doContextReassignment($priorCallTrace[0]['class'], $priorCallTrace[0]['function']);
+        foreach (array_slice($this->getTrace(), 1) as $t) {
+            if (isset($t['class']) && isset($t['function'])) {
+                $this->doContextReassignment($t['class'], $t['function']);
+                break;
+            }
         }
     }
 
