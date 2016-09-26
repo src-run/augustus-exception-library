@@ -22,8 +22,8 @@
   ],
   "require": {
     "php": "~7.0",
-    "src-run/augustus-polyfill-library": "~0.7 || ~0.8",
-    "src-run/augustus-utility-library": "~0.7 || ~0.8"
+    "src-run/augustus-polyfill-library": "~0.6 || ~0.8",
+    "src-run/augustus-utility-library": "~0.6,<7.0"
   },
   "require-dev": {
     "phpunit/phpunit": "~5.0",
