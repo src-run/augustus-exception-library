@@ -44,7 +44,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     public function testFileDiff()
     {
         $exception = $this->getException('A %s.', ['message']);
-        var_dump($exception->getContextFileSnippet(6));
+        $this->assertCount(13, $exception->getContextFileSnippet(6));
     }
 
     public function testDefaults()
