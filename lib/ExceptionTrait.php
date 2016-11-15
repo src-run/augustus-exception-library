@@ -351,7 +351,7 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final private function toScalarRepresentation($value) : string
+    final private function toScalarRepresentation($value)
     {
         return is_scalar($value) ? $value : var_export($value);
     }
