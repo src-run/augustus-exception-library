@@ -46,7 +46,7 @@ trait ExceptionTrait
      *
      * @return ExceptionInterface|ExceptionTrait
      */
-    final public static function create(string $message = null, ...$parameters) : ExceptionInterface
+    final public static function create(string $message = null, ...$parameters): ExceptionInterface
     {
         $instance = new static($message, ...$parameters);
 
@@ -72,7 +72,7 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final public function __toString() : string
+    final public function __toString(): string
     {
         $message = vsprintf('%s: %s (in "%s" at "%s:%d").', [
             $this->getType(false),
@@ -94,7 +94,7 @@ trait ExceptionTrait
      *
      * @return mixed[]
      */
-    final public function __toArray() : array
+    final public function __toArray(): array
     {
         return [
             'type' => $this->getType(true),
@@ -120,9 +120,9 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final public function getType(bool $qualified = false) : string
+    final public function getType(bool $qualified = false): string
     {
-        return $qualified ? ClassInfo::getNameQualified(static::class) : ClassInfo::getNameShort(static::class);
+        return $qualified ? ClassInfo::getNameQualified(static::class): ClassInfo::getNameShort(static::class);
     }
 
     /**
@@ -130,7 +130,7 @@ trait ExceptionTrait
      *
      * @return FileContextInterface|ExceptionTrait
      */
-    final public function getContext() : FileContextInterface
+    final public function getContext(): FileContextInterface
     {
         if (!$this->context) {
             $this->context = new FileContext($this->getFile(), $this->getLine());
@@ -144,7 +144,7 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final public function getContextClass() : string
+    final public function getContextClass(): string
     {
         try {
             return $this->getContext()->getClassName(true);
@@ -158,7 +158,7 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final public function getContextMethod() : string
+    final public function getContextMethod(): string
     {
         try {
             return $this->getContext()->getMethodName(true);
@@ -174,7 +174,7 @@ trait ExceptionTrait
      *
      * @return array|\string[]
      */
-    final public function getContextFileSnippet(int $lines = 3) : array
+    final public function getContextFileSnippet(int $lines = 3): array
     {
         try {
             return $this->getContext()->getFileContext($lines);
@@ -188,7 +188,7 @@ trait ExceptionTrait
      *
      * @return array
      */
-    final public function getAttributes() : array
+    final public function getAttributes(): array
     {
         return $this->attributes;
     }
@@ -201,7 +201,7 @@ trait ExceptionTrait
      *
      * @return ExceptionInterface|ExceptionTrait
      */
-    final public function setAttribute(string $index, $value) : ExceptionInterface
+    final public function setAttribute(string $index, $value): ExceptionInterface
     {
         $this->attributes[$index] = $value;
 
@@ -215,7 +215,7 @@ trait ExceptionTrait
      *
      * @return bool
      */
-    final public function hasAttribute(string $index) : bool
+    final public function hasAttribute(string $index): bool
     {
         return isset($this->attributes[$index]);
     }
@@ -289,7 +289,7 @@ trait ExceptionTrait
             return $ret !== null && !empty($ret);
         })->invoke();
 
-        return $result->isValid() ? $result->getReturn() : false;
+        return $result->isValid() ? $result->getReturn(): false;
     }
 
     /**
@@ -299,7 +299,7 @@ trait ExceptionTrait
      *
      * @return mixed[]
      */
-    final private function filterNotThrowable(array $parameters) : array
+    final private function filterNotThrowable(array $parameters): array
     {
         return array_map(function ($v) {
             return $this->toScalarRepresentation($v);
@@ -326,7 +326,7 @@ trait ExceptionTrait
     /**
      * @return string
      */
-    final private function attributesToString() : string
+    final private function attributesToString(): string
     {
         $attributes = $this->getAttributes();
 
@@ -358,7 +358,7 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final private function removePlaceholders(string $message, int $startAt = 0) : string
+    final private function removePlaceholders(string $message, int $startAt = 0): string
     {
         $regex = '{%([0-9-]+)?([sducoxXbgGeEfF])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}';
         $count = 0;

@@ -39,7 +39,7 @@ class ExceptionTypesTest extends \PHPUnit_Framework_TestCase
      *
      * @return Exception
      */
-    private function getException(string $type, \Exception $previous = null, string $message = 'Exception message', array $replace = []) : \Exception
+    private function getException(string $type, \Exception $previous = null, string $message = 'Exception message', array $replace = []): \Exception
     {
         return new $type($message, ...array_merge($replace, $previous ? [$previous] : []));
     }
@@ -50,7 +50,7 @@ class ExceptionTypesTest extends \PHPUnit_Framework_TestCase
      *
      * @return Exception
      */
-    private function getExceptionStatic(string $type, \Exception $previous) : \Exception
+    private function getExceptionStatic(string $type, \Exception $previous): \Exception
     {
         return call_user_func_array($type.'::create', ['Message for static created exception', $previous]);
     }

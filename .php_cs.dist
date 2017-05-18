@@ -11,9 +11,9 @@
 
 use SLLH\StyleCIBridge\ConfigBridge;
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/vendor/sllh/php-cs-fixer-styleci-bridge/autoload.php';
 
-$headerString = <<<EOF
+$header = <<<EOF
 This file is part of the `src-run/augustus-exception-library` project.
 
 (c) Rob Frawley 2nd <rmf@src.run>
@@ -23,8 +23,10 @@ file that was distributed with this source code.
 EOF;
 
 $config = ConfigBridge::create();
-$config->setRules(array_merge($config->getRules(), [
-    'header_comment' => [ 'header' => $headerString ]
-]));
+$config
+    ->setRules(array_merge($config->getRules(), [
+        'header_comment' => ['header' => $header],
+    ]))
+    ->setUsingCache(false);
 
 return $config;

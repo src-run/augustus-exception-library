@@ -20,4 +20,3 @@ class UnderflowException extends \UnderflowException implements RuntimeException
 {
     use ExceptionTrait;
 }
-
