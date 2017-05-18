@@ -92,16 +92,16 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
         $exception = $this->getException('A %s with number: "%d"', ['string', 10]);
         $this->assertSame('A string with number: "10"', $exception->getMessage());
 
-        $exception->setMessage('Second string with number: "%d"', 100);
+        $exception = $this->getException('Second string with number: "%d"', [100]);
         $this->assertSame('Second string with number: "100"', $exception->getMessage());
 
-        $exception->setMessage('Second string with number "%04d" and undefined string "%s"', 100);
+        $exception = $this->getException('Second string with number "%04d" and undefined string "%s"', [100]);
         $this->assertSame('Second string with number "0100" and undefined string "<string:null>"', $exception->getMessage());
 
-        $exception->setMessage('Second string with undefined number "%04d" and undefined string "%s"');
+        $exception = $this->getException('Second string with undefined number "%04d" and undefined string "%s"');
         $this->assertSame('Second string with undefined number "<integer:null>" and undefined string "<string:null>"', $exception->getMessage());
 
-        $exception->setMessage('Second string with number "%d" and string "%s"', 1, 'bar', 'foo-bar');
+        $exception = $this->getException('Second string with number "%d" and string "%s"', [1, 'bar', 'foo-bar']);
         $this->assertSame('Second string with number "1" and string "bar"', $exception->getMessage());
     }
 

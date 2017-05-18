@@ -13,11 +13,17 @@ namespace SR\Exception;
 
 use SR\Util\Context\FileContextInterface;
 
-/**
- * Base exception interface used by this library.
- */
 interface ExceptionInterface extends \Throwable
 {
+    /**
+     * Constructor accepts message string and any number of parameters, which will be used as string replacements for
+     * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
+     *
+     * @param null|string $message
+     * @param mixed       ...$parameters
+     */
+    public function __construct(string $message = null, ...$parameters);
+
     /**
      * @param null|string $message
      * @param mixed       ...$parameters
@@ -80,15 +86,11 @@ interface ExceptionInterface extends \Throwable
     public function getContextFileSnippet(int $lines = 3) : array;
 
     /**
-     * Assign the exception message. All parameters following the first are treated as replacements for the first
-     * parameter using {@see vsprintf}.
+     * Returns the attributes array.
      *
-     * @param string $message
-     * @param mixed  ...$params
-     *
-     * @return ExceptionInterface
+     * @return array
      */
-    public function setMessage(string $message = null, ...$params) : ExceptionInterface;
+    public function getAttributes() : array;
 
     /**
      * Sets an attribute property using the index and value provided.
@@ -101,22 +103,6 @@ interface ExceptionInterface extends \Throwable
     public function setAttribute(string $index, $value) : ExceptionInterface;
 
     /**
-     * Returns the value of an attribute with the specified index, or null if such an attribute does not exist.
-     *
-     * @param string $index The attribute index to search for
-     *
-     * @return null|mixed
-     */
-    public function getAttribute(string $index);
-
-    /**
-     * Returns the attributes array.
-     *
-     * @return array
-     */
-    public function getAttributes() : array;
-
-    /**
      * Returns true if an attribute with the specified index exists.
      *
      * @param string $index The attribute index to search for
@@ -124,6 +110,15 @@ interface ExceptionInterface extends \Throwable
      * @return bool
      */
     public function hasAttribute(string $index) : bool;
+
+    /**
+     * Returns the value of an attribute with the specified index, or null if such an attribute does not exist.
+     *
+     * @param string $index The attribute index to search for
+     *
+     * @return null|mixed
+     */
+    public function getAttribute(string $index);
 }
 
 /* EOF */

@@ -16,9 +16,6 @@ use SR\Util\Context\FileContext;
 use SR\Util\Context\FileContextInterface;
 use SR\Util\Info\ClassInfo;
 
-/**
- * The base, abstract exception class used by all concrete implementations.
- */
 trait ExceptionTrait
 {
     /**
@@ -27,14 +24,21 @@ trait ExceptionTrait
     private $attributes = [];
 
     /**
-     * @var string
-     */
-    protected $message = null;
-
-    /**
      * @var FileContextInterface
      */
-    protected $context;
+    private $context;
+
+    /**
+     * Constructor accepts message string and any number of parameters, which will be used as string replacements for
+     * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
+     *
+     * @param null|string $message
+     * @param mixed       ...$parameters
+     */
+    public function __construct(string $message = null, ...$parameters)
+    {
+        parent::__construct($this->compileMessage((string) $message, $parameters), null, $this->compilePrevious($parameters));
+    }
 
     /**
      * @param null|string $message
@@ -44,12 +48,23 @@ trait ExceptionTrait
      */
     final public static function create(string $message = null, ...$parameters) : ExceptionInterface
     {
-        $object = new static($message, ...$parameters);
-        $method = (new \ReflectionObject($object))->getMethod('doContextReassignmentOnStaticInstantiation');
-        $method->setAccessible(true);
-        $method->invoke($object);
+        $instance = new static($message, ...$parameters);
 
-        return $object;
+        $setProperty = function ($property, $value) use ($instance) {
+            $rp = (new \ReflectionObject($instance))->getProperty($property);
+            $rp->setAccessible(true);
+            $rp->setValue($instance, $value);
+        };
+
+        foreach (array_slice($instance->getTrace(), 1) as $step) {
+            if (isset($step['class']) && isset($step['function'])) {
+                $setProperty('file', ($rc = new \ReflectionClass($step['class']))->getFileName());
+                $setProperty('line', $rc->getMethod($step['function'])->getStartLine());
+                break;
+            }
+        }
+
+        return $instance;
     }
 
     /**
@@ -107,7 +122,7 @@ trait ExceptionTrait
      */
     final public function getType(bool $qualified = false) : string
     {
-        return $qualified ? static::class : ClassInfo::getNameShort(static::class);
+        return $qualified ? ClassInfo::getNameQualified(static::class) : ClassInfo::getNameShort(static::class);
     }
 
     /**
@@ -117,7 +132,11 @@ trait ExceptionTrait
      */
     final public function getContext() : FileContextInterface
     {
-        return $this->initContext()->context;
+        if (!$this->context) {
+            $this->context = new FileContext($this->getFile(), $this->getLine());
+        }
+
+        return $this->context;
     }
 
     /**
@@ -165,19 +184,13 @@ trait ExceptionTrait
     }
 
     /**
-     * Assign the exception message. All parameters following the first are treated as replacements for the first
-     * parameter using {@see vsprintf}.
+     * Returns the attributes array.
      *
-     * @param string $message
-     * @param mixed  ...$params
-     *
-     * @return ExceptionInterface|ExceptionTrait
+     * @return array
      */
-    final public function setMessage(string $message = null, ...$params) : ExceptionInterface
+    final public function getAttributes() : array
     {
-        $this->message = $this->compileMessage($message, $params);
-
-        return $this;
+        return $this->attributes;
     }
 
     /**
@@ -196,6 +209,18 @@ trait ExceptionTrait
     }
 
     /**
+     * Returns true if an attribute with the specified index exists.
+     *
+     * @param string $index The attribute index to search for
+     *
+     * @return bool
+     */
+    final public function hasAttribute(string $index) : bool
+    {
+        return isset($this->attributes[$index]);
+    }
+
+    /**
      * Returns the value of an attribute with the specified index, or null if such an attribute does not exist.
      *
      * @param string $index The attribute index to search for
@@ -208,58 +233,16 @@ trait ExceptionTrait
     }
 
     /**
-     * Returns the attributes array.
-     *
-     * @return array
-     */
-    final public function getAttributes() : array
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * Returns true if an attribute with the specified index exists.
-     *
-     * @param string $index The attribute index to search for
-     *
-     * @return bool
-     */
-    final public function hasAttribute(string $index) : bool
-    {
-        return isset($this->attributes[$index]) && !empty($this->attributes[$index]);
-    }
-
-    /**
-     * @return string
-     */
-    protected function defaultMessage() : string
-    {
-        return 'An unspecified exception was thrown during code execution';
-    }
-
-    /**
-     * @return ExceptionInterface|ExceptionTrait
-     */
-    final private function initContext() : ExceptionInterface
-    {
-        if (!$this->context) {
-            $this->context = new FileContext($this->getFile(), $this->getLine());
-        }
-
-        return $this;
-    }
-
-    /**
      * Handle "compilation" of the final previous exception by filtering the passed parameters for instances of \Throwable
      * and returning the first instance found.
      *
-     * @param mixed[] $params
+     * @param mixed[] $parameters
      *
      * @return \Throwable|null
      */
-    final protected function compileThrown(array $params = [])
+    final protected function compilePrevious(array $parameters = [])
     {
-        if (empty($thrown = $this->filterThrowable($params))) {
+        if (empty($thrown = $this->filterThrowable($parameters))) {
             return null;
         }
 
@@ -274,74 +257,84 @@ trait ExceptionTrait
      * instead return the message string in its un-compiled form.
      *
      * @param null|string $message
-     * @param mixed[]     $replace
+     * @param mixed[]     $parameters
      *
      * @return string|null
      */
-    final protected function compileMessage(string $message = null, array $replace = [])
+    final protected function compileMessage(string $message = null, array $parameters = [])
     {
-        $replace = $this->filterNotThrowable($replace);
-
-        return $this->compileMessagePlaceholders($message, $replace, false) ?:
-            $this->compileMessagePlaceholders($message, $replace, true);
+        return $this->compileMessagePlaceholders($message, $this->filterNotThrowable($parameters), false) ?:
+            $this->compileMessagePlaceholders($message, $parameters, true);
     }
 
     /**
      * Try to compile message with provided string and replacement array.
      *
-     * @param string  $message The message string, which may contain placeholders for vsprintf
-     * @param mixed[] $replace Array of replacements for the string
-     * @param bool    $removes If true extra placeholders will be removed from the string such that the number of
-     *                         placeholders matches the number of replacements
+     * @param string  $message      The message string, which may contain placeholders for vsprintf
+     * @param mixed[] $replacements Array of replacements for the string
+     * @param bool    $matchAnchors If true extra placeholders will be removed from the string such that the number of
+     *                              placeholders matches the number of replacements
      *
      * @return bool|string
      */
-    final private function compileMessagePlaceholders(string $message, array $replace = [], $removes = false)
+    final private function compileMessagePlaceholders(string $message, array $replacements = [], bool $matchAnchors = false)
     {
-        if ($removes) {
-            $message = $this->removePlaceholders($message, count($replace));
+        if (true === $matchAnchors) {
+            $message = $this->removePlaceholders($message, count($replacements));
         }
 
-        $return = CallSilencerFactory::create(function () use ($message, $replace) {
-            return vsprintf($message, $replace);
+        $result = CallSilencerFactory::create(function () use ($message, $replacements) {
+            return vsprintf($message, $replacements);
         }, function ($ret) {
             return $ret !== null && !empty($ret);
         })->invoke();
 
-        return $return->isValid() ? $return->getReturn() : false;
+        return $result->isValid() ? $result->getReturn() : false;
     }
 
     /**
      * Filters an array of parameters (the values passed to any of this object's variadic methods) of all throwables.
      *
-     * @param mixed[] $from
+     * @param mixed[] $parameters
      *
      * @return mixed[]
      */
-    final private function filterNotThrowable(array $from) : array
+    final private function filterNotThrowable(array $parameters) : array
     {
-        $to = array_filter($from, function ($value) {
-            return !ClassInfo::isThrowableEquitable($value);
-        });
-
-        return array_map(function ($value) {
-            return $this->toScalarRepresentation($value);
-        }, $to);
+        return array_map(function ($v) {
+            return $this->toScalarRepresentation($v);
+        }, array_filter($parameters, function ($p) {
+            return !ClassInfo::isThrowableEquitable($p);
+        }));
     }
 
     /**
      * Filters an array of parameters (the values passed to any of this object's variadic methods) of non-throwables
      * and returns the first found or null if none are found.
      *
-     * @param mixed[] $from
+     * @param mixed[] $parameters
      *
      * @return \Throwable[]
      */
-    final private function filterThrowable(array $from)
+    final private function filterThrowable(array $parameters)
     {
-        return array_filter($from, function ($p) {
-            return is_object($p) && ClassInfo::isThrowableEquitable($p);
+        return array_filter($parameters, function ($p) {
+            return ClassInfo::isThrowableEquitable($p);
         });
+    }
+
+    /**
+     * @return string
+     */
+    final private function attributesToString() : string
+    {
+        $attributes = $this->getAttributes();
+
+        array_walk($attributes, function (&$value, $name) {
+            $value = sprintf('[%s]=%s', $name, $this->toScalarRepresentation($value));
+        });
+
+        return implode(', ', $attributes);
     }
 
     /**
@@ -354,20 +347,6 @@ trait ExceptionTrait
     final private function toScalarRepresentation($value)
     {
         return is_scalar($value) ? $value : var_export($value);
-    }
-
-    /**
-     * @return string
-     */
-    final private function attributesToString() : string
-    {
-        $attributes = $this->getAttributes();
-
-        array_walk($attributes, function (&$value, $index) {
-            $value = sprintf('[%s]=%s', $index, $this->toScalarRepresentation($value));
-        });
-
-        return implode(', ', $attributes);
     }
 
     /**
@@ -413,47 +392,4 @@ trait ExceptionTrait
 
         return  $typeName;
     }
-
-    /**
-     * Special, private method is only called by static create method (using reflection). Since on static construction
-     * the actual exception instance is created within this class, the exception object properties (such as file, line)
-     * refer to this file instead of the calling context. This method interprets a trace araay to reassign properties
-     * to the location from which the create method was called.
-     */
-    final private function doContextReassignmentOnStaticInstantiation()
-    {
-        foreach (array_slice($this->getTrace(), 1) as $t) {
-            if (isset($t['class']) && isset($t['function'])) {
-                $this->doContextReassignment($t['class'], $t['function']);
-                break;
-            }
-        }
-    }
-
-    /**
-     * @param string $object
-     * @param string $method
-     */
-    final private function doContextReassignment(string $object, string $method)
-    {
-        $object = new \ReflectionClass($object);
-
-        $this->doContextReassignmentForProperty('file', $object->getFileName());
-        $this->doContextReassignmentForProperty('line', $object->getMethod($method)->getStartLine());
-    }
-
-    /**
-     * @param string $name
-     * @param mixed  $value
-     */
-    final private function doContextReassignmentForProperty(string $name, $value)
-    {
-        $property = (new \ReflectionObject($this))
-            ->getProperty($name);
-
-        $property->setAccessible(true);
-        $property->setValue($this, $value);
-    }
 }
-
-/* EOF */

@@ -13,11 +13,6 @@ namespace SR\Exception\Runtime;
 
 use SR\Exception\ExceptionInterface;
 
-/**
- * Shared interface for runtime-prefixed exceptions.
- */
 interface RuntimeExceptionInterface extends ExceptionInterface
 {
 }
-
-/* EOF */

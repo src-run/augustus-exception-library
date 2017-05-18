@@ -14,23 +14,9 @@ namespace SR\Exception\Logic;
 use SR\Exception\ExceptionTrait;
 
 /**
- * Intended to be used in if an unexpected argument type or value is encountered.
+ * Used when an unexpected argument type or value is encountered.
  */
 class InvalidArgumentException extends \InvalidArgumentException implements LogicExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * Constructor accepts message string and any number of parameters, which will be used as string replacements for
-     * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
-     *
-     * @param null|string $message
-     * @param mixed       ...$params
-     */
-    public function __construct(string $message = null, ...$params)
-    {
-        parent::__construct($this->compileMessage($message ?: $this->defaultMessage(), $params), null, $this->compileThrown($params));
-    }
 }
-
-/* EOF */

@@ -13,11 +13,6 @@ namespace SR\Exception\Logic;
 
 use SR\Exception\ExceptionInterface;
 
-/**
- * Shared interface for logic-prefixed exceptions.
- */
 interface LogicExceptionInterface extends ExceptionInterface
 {
 }
-
-/* EOF */

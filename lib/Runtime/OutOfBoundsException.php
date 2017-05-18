@@ -14,23 +14,9 @@ namespace SR\Exception\Runtime;
 use SR\Exception\ExceptionTrait;
 
 /**
- * Intended to be when an invalid integer index is encountered.
+ * Used when an invalid integer index is encountered.
  */
 class OutOfBoundsException extends \OutOfBoundsException implements RuntimeExceptionInterface
 {
     use ExceptionTrait;
-
-    /**
-     * Constructor accepts message string and any number of parameters, which will be used as string replacements for
-     * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
-     *
-     * @param null|string $message
-     * @param mixed       ...$params
-     */
-    public function __construct(string $message = null, ...$params)
-    {
-        parent::__construct($this->compileMessage($message ?: $this->defaultMessage(), $params), null, $this->compileThrown($params));
-    }
 }
-
-/* EOF */
