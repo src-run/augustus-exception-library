@@ -122,7 +122,7 @@ trait ExceptionTrait
      */
     final public function getType(bool $qualified = false): string
     {
-        return $qualified ? ClassInfo::getNameQualified(static::class): ClassInfo::getNameShort(static::class);
+        return $qualified ? ClassInfo::getNameQualified(static::class) : ClassInfo::getNameShort(static::class);
     }
 
     /**
@@ -289,7 +289,7 @@ trait ExceptionTrait
             return $ret !== null && !empty($ret);
         })->invoke();
 
-        return $result->isValid() ? $result->getReturn(): false;
+        return $result->isValid() ? $result->getReturn() : false;
     }
 
     /**
