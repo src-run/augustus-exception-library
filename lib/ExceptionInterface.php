@@ -11,27 +11,10 @@
 
 namespace SR\Exception;
 
-use SR\Util\Context\FileContextInterface;
+use SR\Utilities\Context\FileContextInterface;
 
 interface ExceptionInterface extends \Throwable
 {
-    /**
-     * Constructor accepts message string and any number of parameters, which will be used as string replacements for
-     * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
-     *
-     * @param null|string $message
-     * @param mixed       ...$parameters
-     */
-    public function __construct(string $message = null, ...$parameters);
-
-    /**
-     * @param null|string $message
-     * @param mixed       ...$parameters
-     *
-     * @return ExceptionInterface
-     */
-    public static function create(string $message = null, ...$parameters): ExceptionInterface;
-
     /**
      * Return string representation of exception.
      *
@@ -45,6 +28,14 @@ interface ExceptionInterface extends \Throwable
      * @return mixed[]
      */
     public function __toArray(): array;
+
+    /**
+     * @param null|string $message
+     * @param mixed       ...$parameters
+     *
+     * @return ExceptionInterface
+     */
+    public static function create(string $message = null, ...$parameters): self;
 
     /**
      * Returns the exception type (class name) as either a fully-qualified class name or as just the class base name.
@@ -100,7 +91,7 @@ interface ExceptionInterface extends \Throwable
      *
      * @return ExceptionInterface
      */
-    public function setAttribute(string $index, $value): ExceptionInterface;
+    public function setAttribute(string $index, $value): self;
 
     /**
      * Returns true if an attribute with the specified index exists.

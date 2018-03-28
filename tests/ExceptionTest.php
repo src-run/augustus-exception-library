@@ -11,24 +11,16 @@
 
 namespace SR\Exception\Tests;
 
+use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
 
 /**
- * Class ExceptionTest.
+ * @covers \SR\Exception\Exception
+ * @covers \SR\Exception\ExceptionInterface
+ * @covers \SR\Exception\ExceptionTrait
  */
-class ExceptionTest extends \PHPUnit_Framework_TestCase
+class ExceptionTest extends TestCase
 {
-    /**
-     * @param string $message
-     * @param array  $replacements
-     *
-     * @return Exception
-     */
-    private function getException($message = 'A test exception', array $replacements = [])
-    {
-        return new Exception($message, ...$replacements);
-    }
-
     public function testGetMethod()
     {
         $exception = $this->getException();
@@ -44,7 +36,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     public function testFileDiff()
     {
         $exception = $this->getException('A %s.', ['message']);
-        $this->assertCount(13, $exception->getContextFileSnippet(6));
+        $this->assertCount(7, $exception->getContextFileSnippet(3));
     }
 
     public function testDefaults()
@@ -71,6 +63,33 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
             $exception->setAttribute($i, $a);
         }
         $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $exception->__toString());
+    }
+
+    public function testComplexToString()
+    {
+        $a = new class() {
+            private $inner;
+
+            public function setInner($inner)
+            {
+                $this->inner = $inner;
+            }
+        };
+
+        $b = new class() {
+            private $inner;
+
+            public function setInner($inner)
+            {
+                $this->inner = $inner;
+            }
+        };
+
+        $b->setInner($a);
+        $a->setInner($b);
+
+        $e = $this->getException('Complex stringify replacements like "%s": %s', [$a, [$a, $b]]);
+        $this->assertNotNull($e->getMessage());
     }
 
     public function testType()
@@ -170,6 +189,17 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('unknown-class', $exception->getContextClass());
         $this->assertSame('unknown-class::unknown-method', $exception->getContextMethod());
         $this->assertCount(0, $exception->getContextFileSnippet());
+    }
+
+    /**
+     * @param string $message
+     * @param array  $replacements
+     *
+     * @return Exception
+     */
+    private function getException($message = 'A test exception', array $replacements = [])
+    {
+        return new Exception($message, ...$replacements);
     }
 }
 

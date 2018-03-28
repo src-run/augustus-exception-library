@@ -12,9 +12,9 @@
 namespace SR\Exception;
 
 use SR\Silencer\CallSilencerFactory;
-use SR\Util\Context\FileContext;
-use SR\Util\Context\FileContextInterface;
-use SR\Util\Info\ClassInfo;
+use SR\Utilities\ClassQuery;
+use SR\Utilities\Context\FileContext;
+use SR\Utilities\Context\FileContextInterface;
 
 trait ExceptionTrait
 {
@@ -38,33 +38,6 @@ trait ExceptionTrait
     public function __construct(string $message = null, ...$parameters)
     {
         parent::__construct($this->compileMessage((string) $message, $parameters), null, $this->compilePrevious($parameters));
-    }
-
-    /**
-     * @param null|string $message
-     * @param mixed       ...$parameters
-     *
-     * @return ExceptionInterface|ExceptionTrait
-     */
-    final public static function create(string $message = null, ...$parameters): ExceptionInterface
-    {
-        $instance = new static($message, ...$parameters);
-
-        $setProperty = function ($property, $value) use ($instance) {
-            $rp = (new \ReflectionObject($instance))->getProperty($property);
-            $rp->setAccessible(true);
-            $rp->setValue($instance, $value);
-        };
-
-        foreach (array_slice($instance->getTrace(), 1) as $step) {
-            if (isset($step['class']) && isset($step['function'])) {
-                $setProperty('file', ($rc = new \ReflectionClass($step['class']))->getFileName());
-                $setProperty('line', $rc->getMethod($step['function'])->getStartLine());
-                break;
-            }
-        }
-
-        return $instance;
     }
 
     /**
@@ -114,6 +87,26 @@ trait ExceptionTrait
     }
 
     /**
+     * @param null|string $message
+     * @param mixed       ...$parameters
+     *
+     * @return ExceptionInterface|ExceptionTrait
+     */
+    final public static function create(string $message = null, ...$parameters): ExceptionInterface
+    {
+        $instance = new static($message, ...$parameters);
+
+        foreach (array_slice($instance->getTrace(), 1) as $step) {
+            if (true === isset($step['class']) && true === isset($step['function'])) {
+                self::assignInstancePropertiesFromTrace($instance, $step['class'], $step['function']);
+                break;
+            }
+        }
+
+        return $instance;
+    }
+
+    /**
      * Returns the exception type (class name) as either a fully-qualified class name or as just the class base name.
      *
      * @param bool $qualified
@@ -122,7 +115,9 @@ trait ExceptionTrait
      */
     final public function getType(bool $qualified = false): string
     {
-        return $qualified ? ClassInfo::getNameQualified(static::class) : ClassInfo::getNameShort(static::class);
+        return $qualified
+            ? ClassQuery::getNameQualified(static::class)
+            : ClassQuery::getNameShort(static::class);
     }
 
     /**
@@ -263,8 +258,24 @@ trait ExceptionTrait
      */
     final protected function compileMessage(string $message = null, array $parameters = [])
     {
-        return $this->compileMessagePlaceholders($message, $this->filterNotThrowable($parameters), false) ?:
-            $this->compileMessagePlaceholders($message, $parameters, true);
+        return $this->compileMessagePlaceholders($message, $this->filterNotThrowable($parameters), false)
+            ?: $this->compileMessagePlaceholders($message, $parameters, true);
+    }
+
+    /**
+     * @param object $instance
+     * @param string $class
+     * @param string $function
+     */
+    final private static function assignInstancePropertiesFromTrace($instance, string $class, string $function)
+    {
+        ClassQuery::setNonAccessiblePropertyValue(
+            'file', $instance, ($rc = ClassQuery::getReflection($class))->getFileName()
+        );
+
+        ClassQuery::setNonAccessiblePropertyValue(
+            'line', $instance, $rc->getMethod($function)->getStartLine()
+        );
     }
 
     /**
@@ -286,7 +297,7 @@ trait ExceptionTrait
         $result = CallSilencerFactory::create(function () use ($message, $replacements) {
             return vsprintf($message, $replacements);
         }, function ($ret) {
-            return $ret !== null && !empty($ret);
+            return null !== $ret && !empty($ret);
         })->invoke();
 
         return $result->isValid() ? $result->getReturn() : false;
@@ -304,7 +315,7 @@ trait ExceptionTrait
         return array_map(function ($v) {
             return $this->toScalarRepresentation($v);
         }, array_filter($parameters, function ($p) {
-            return !ClassInfo::isThrowableEquitable($p);
+            return !ClassQuery::isThrowableEquitable($p);
         }));
     }
 
@@ -319,7 +330,7 @@ trait ExceptionTrait
     final private function filterThrowable(array $parameters)
     {
         return array_filter($parameters, function ($p) {
-            return ClassInfo::isThrowableEquitable($p);
+            return ClassQuery::isThrowableEquitable($p);
         });
     }
 
@@ -346,7 +357,17 @@ trait ExceptionTrait
      */
     final private function toScalarRepresentation($value)
     {
-        return is_scalar($value) ? $value : var_export($value);
+        if (is_scalar($value)) {
+            return $value;
+        }
+
+        $normalize = function (string $exported): string {
+            return trim(preg_replace('{\s+}', ' ',
+                preg_replace('{\n[\s\t]*}', ' ', $exported)
+            ), ' ');
+        };
+
+        return $normalize(@var_export($value, true) ?? @print_r($value, true));
     }
 
     /**
@@ -375,21 +396,21 @@ trait ExceptionTrait
      *
      * @return string
      */
-    final private function expandPlaceholder($placeholder)
+    final private function expandPlaceholder(string $placeholder): string
     {
-        $typeName = 'unknown';
-        $typeMaps = [
+        $type = 'unknown';
+        $maps = [
             'string' => ['s'],
             'integer' => ['d', 'u', 'c', 'o', 'x', 'X', 'b'],
             'double' => ['g', 'G', 'e', 'E', 'f', 'F'],
         ];
 
-        foreach ($typeMaps as $name => $characters) {
-            if (in_array($placeholder, $characters)) {
-                $typeName = $name;
+        foreach ($maps as $name => $chars) {
+            if (in_array($placeholder, $chars, true)) {
+                $type = $name;
             }
         }
 
-        return  $typeName;
+        return  $type;
     }
 }

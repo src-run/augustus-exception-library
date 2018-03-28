@@ -11,6 +11,7 @@
 
 namespace SR\Exception\Tests;
 
+use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
 use SR\Exception\Logic\BadFunctionCallException;
 use SR\Exception\Logic\BadMethodCallException;
@@ -25,36 +26,26 @@ use SR\Exception\Runtime\RangeException;
 use SR\Exception\Runtime\RuntimeException;
 use SR\Exception\Runtime\UnderflowException;
 use SR\Exception\Runtime\UnexpectedValueException;
-use SR\Util\Context\FileContextInterface;
+use SR\Utilities\Context\FileContextInterface;
 
 /**
- * Class ExceptionTypesTest.
+ * @covers \SR\Exception\Exception
+ * @covers \SR\Exception\Logic\BadFunctionCallException
+ * @covers \SR\Exception\Logic\BadMethodCallException
+ * @covers \SR\Exception\Logic\DomainException
+ * @covers \SR\Exception\Logic\InvalidArgumentException
+ * @covers \SR\Exception\Logic\LengthException
+ * @covers \SR\Exception\Logic\LogicException
+ * @covers \SR\Exception\Logic\OutOfRangeException
+ * @covers \SR\Exception\Runtime\OutOfBoundsException
+ * @covers \SR\Exception\Runtime\OverflowException
+ * @covers \SR\Exception\Runtime\RangeException
+ * @covers \SR\Exception\Runtime\RuntimeException
+ * @covers \SR\Exception\Runtime\UnderflowException
+ * @covers \SR\Exception\Runtime\UnexpectedValueException
  */
-class ExceptionTypesTest extends \PHPUnit_Framework_TestCase
+class ExceptionTypesTest extends TestCase
 {
-    /**
-     * @param string $type
-     * @param string $message
-     * @param array  $replace
-     *
-     * @return Exception
-     */
-    private function getException(string $type, \Exception $previous = null, string $message = 'Exception message', array $replace = []): \Exception
-    {
-        return new $type($message, ...array_merge($replace, $previous ? [$previous] : []));
-    }
-
-    /**
-     * @param string     $type
-     * @param \Exception $previous
-     *
-     * @return Exception
-     */
-    private function getExceptionStatic(string $type, \Exception $previous): \Exception
-    {
-        return call_user_func_array($type.'::create', ['Message for static created exception', $previous]);
-    }
-
     /**
      * @return string[]
      */
@@ -104,6 +95,29 @@ class ExceptionTypesTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(__CLASS__, $exception->getContextClass());
         $this->assertSame(__CLASS__.'::getExceptionStatic', $exception->getContextMethod());
         $this->assertSame($previous, $exception->getPrevious());
+    }
+
+    /**
+     * @param string $type
+     * @param string $message
+     * @param array  $replace
+     *
+     * @return Exception
+     */
+    private function getException(string $type, \Exception $previous = null, string $message = 'Exception message', array $replace = []): \Exception
+    {
+        return new $type($message, ...array_merge($replace, $previous ? [$previous] : []));
+    }
+
+    /**
+     * @param string     $type
+     * @param \Exception $previous
+     *
+     * @return Exception
+     */
+    private function getExceptionStatic(string $type, \Exception $previous): \Exception
+    {
+        return call_user_func_array($type.'::create', ['Message for static created exception', $previous]);
     }
 }
 
