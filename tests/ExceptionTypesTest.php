@@ -26,6 +26,7 @@ use SR\Exception\Runtime\RangeException;
 use SR\Exception\Runtime\RuntimeException;
 use SR\Exception\Runtime\UnderflowException;
 use SR\Exception\Runtime\UnexpectedValueException;
+use SR\Utilities\ClassQuery;
 use SR\Utilities\Context\FileContextInterface;
 
 /**
@@ -85,15 +86,19 @@ class ExceptionTypesTest extends TestCase
         $this->assertInstanceOf(FileContextInterface::class, $exception->getContext());
         $this->assertSame(__FILE__, $exception->getFile());
         $this->assertSame(__FILE__, $exception->getContext()->getFile()->getPathname());
-        $this->assertSame(__CLASS__, $exception->getContextClass());
-        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethod());
+        $this->assertSame(__CLASS__, $exception->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
+        $this->assertSame('getException', $exception->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethodName(true));
         $this->assertSame($previous, $exception->getPrevious());
 
         $exception = $this->getExceptionStatic($type, $previous);
         $this->assertSame(__FILE__, $exception->getFile());
         $this->assertSame(__FILE__, $exception->getContext()->getFile()->getPathname());
-        $this->assertSame(__CLASS__, $exception->getContextClass());
-        $this->assertSame(__CLASS__.'::getExceptionStatic', $exception->getContextMethod());
+        $this->assertSame(__CLASS__, $exception->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
+        $this->assertSame('getExceptionStatic', $exception->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getExceptionStatic', $exception->getContextMethodName(true));
         $this->assertSame($previous, $exception->getPrevious());
     }
 

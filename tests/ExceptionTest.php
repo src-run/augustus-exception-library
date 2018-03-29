@@ -13,6 +13,7 @@ namespace SR\Exception\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
+use SR\Utilities\ClassQuery;
 
 /**
  * @covers \SR\Exception\Exception
@@ -39,16 +40,15 @@ class ExceptionTest extends TestCase
         $this->assertSame($i, $e2->getInputReplacements());
     }
 
-    public function testGetMethod()
+    public function testGetMethodAndClassContext()
     {
         $exception = $this->getException();
-        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethod());
-    }
-
-    public function testGetClass()
-    {
-        $exception = $this->getException();
-        $this->assertSame(__CLASS__, $exception->getContextClass());
+        $this->assertSame('getException', $exception->getContextMethod()->getShortName());
+        $this->assertSame('getException', $exception->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethodName(true));
+        $this->assertSame(__CLASS__, $exception->getContextClass()->getName());
+        $this->assertSame(__CLASS__, $exception->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
     }
 
     public function testFileDiff()
@@ -217,7 +217,9 @@ class ExceptionTest extends TestCase
         $property->setValue($exception, realpath(__DIR__.'/Fixtures/NoClass.php'));
 
         $this->assertNull($exception->getContextClass());
+        $this->assertNull($exception->getContextClassName());
         $this->assertNull($exception->getContextMethod());
+        $this->assertNull($exception->getContextMethodName());
         $this->assertCount(0, $exception->getContextFileSnippet());
     }
 

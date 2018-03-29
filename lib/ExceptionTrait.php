@@ -41,7 +41,7 @@ trait ExceptionTrait
         $message = vsprintf('%s: %s (in "%s" at "%s:%d").', [
             $this->getType(false),
             $this->getMessage(),
-            $this->getContextMethod(),
+            $this->getContextMethodName(),
             $this->getFile(),
             $this->getLine(),
         ]);
@@ -65,8 +65,8 @@ trait ExceptionTrait
             'message' => $this->getMessage(),
             'code' => $this->getCode(),
             'context' => $this->getContext(),
-            'class' => $this->getContextClass(),
-            'method' => $this->getContextMethod(),
+            'class' => $this->getContextClassName(),
+            'method' => $this->getContextMethodName(),
             'file-name' => $this->getFile(),
             'file-line' => $this->getLine(),
             'file-diff' => $this->getContextFileSnippet(),

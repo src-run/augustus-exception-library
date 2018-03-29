@@ -36,14 +36,44 @@ trait ExceptionContextTrait
     }
 
     /**
+     * Returns the reflection class of the thrown exception's context.
+     *
+     * @return null|\ReflectionClass
+     */
+    final public function getContextClass(): ?\ReflectionClass
+    {
+        try {
+            return $this->getContext()->getClass();
+        } catch (\RuntimeException $e) {
+            return null;
+        }
+    }
+
+    /**
      * Returns the class name of the thrown exception's context.
+     *
+     * @param bool $qualified
      *
      * @return null|string
      */
-    final public function getContextClass(): ?string
+    final public function getContextClassName(bool $qualified = true): ?string
     {
         try {
-            return $this->getContext()->getClassName(true);
+            return $this->getContext()->getClassName($qualified);
+        } catch (\RuntimeException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the reflection method of the thrown exception's context.
+     *
+     * @return null|\ReflectionMethod
+     */
+    final public function getContextMethod(): ?\ReflectionMethod
+    {
+        try {
+            return $this->getContext()->getMethod();
         } catch (\RuntimeException $e) {
             return null;
         }
@@ -52,12 +82,14 @@ trait ExceptionContextTrait
     /**
      * Returns the method name of the thrown exception's context.
      *
+     * @param bool $qualified
+     *
      * @return null|string
      */
-    final public function getContextMethod(): ?string
+    final public function getContextMethodName(bool $qualified = false): ?string
     {
         try {
-            return $this->getContext()->getMethodName(true);
+            return $this->getContext()->getMethodName($qualified);
         } catch (\RuntimeException $e) {
             return null;
         }
