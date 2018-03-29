@@ -16,11 +16,29 @@ use SR\Exception\Exception;
 
 /**
  * @covers \SR\Exception\Exception
+ * @covers \SR\Exception\ExceptionAttributesTrait
+ * @covers \SR\Exception\ExceptionContextTrait
  * @covers \SR\Exception\ExceptionInterface
+ * @covers \SR\Exception\ExceptionInterpolateTrait
  * @covers \SR\Exception\ExceptionTrait
  */
 class ExceptionTest extends TestCase
 {
+    public function testGetInput()
+    {
+        $m = 'A simple %s with %d replacements.';
+        $r = ['string', 2];
+        $i = ['string', '2'];
+
+        $e1 = $this->getException($m, $r);
+        $this->assertSame($m, $e1->getInputMessage());
+        $this->assertSame($i, $e1->getInputReplacements());
+
+        $e2 = $this->getException($m, array_merge($r, [$e1]));
+        $this->assertSame($m, $e2->getInputMessage());
+        $this->assertSame($i, $e2->getInputReplacements());
+    }
+
     public function testGetMethod()
     {
         $exception = $this->getException();
@@ -37,6 +55,10 @@ class ExceptionTest extends TestCase
     {
         $exception = $this->getException('A %s.', ['message']);
         $this->assertCount(7, $exception->getContextFileSnippet(3));
+        $this->assertTrue(in_array(
+            '    private function getException($message = \'A test exception\', array $replacements = [])',
+            $exception->getContextFileSnippet(10))
+        );
     }
 
     public function testDefaults()
@@ -65,7 +87,7 @@ class ExceptionTest extends TestCase
         $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $exception->__toString());
     }
 
-    public function testComplexToString()
+    public function testStringifyComplex()
     {
         $a = new class() {
             private $inner;
@@ -85,11 +107,19 @@ class ExceptionTest extends TestCase
             }
         };
 
+        $c = new class() {
+            public function __toString(): string
+            {
+                return 'abcdef0123';
+            }
+        };
+
         $b->setInner($a);
         $a->setInner($b);
 
-        $e = $this->getException('Complex stringify replacements like "%s": %s', [$a, [$a, $b]]);
+        $e = $this->getException('Complex stringify replacements like "%s" and "%s" and "%s"', [$a, [$a, $b], $c]);
         $this->assertNotNull($e->getMessage());
+        $this->assertStringMatchesFormat('%sabcdef0123%s', $e->getMessage());
     }
 
     public function testType()
@@ -186,8 +216,8 @@ class ExceptionTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($exception, realpath(__DIR__.'/Fixtures/NoClass.php'));
 
-        $this->assertSame('unknown-class', $exception->getContextClass());
-        $this->assertSame('unknown-class::unknown-method', $exception->getContextMethod());
+        $this->assertNull($exception->getContextClass());
+        $this->assertNull($exception->getContextMethod());
         $this->assertCount(0, $exception->getContextFileSnippet());
     }
 
@@ -202,5 +232,3 @@ class ExceptionTest extends TestCase
         return new Exception($message, ...$replacements);
     }
 }
-
-/* EOF */

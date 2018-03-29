@@ -120,5 +120,3 @@ class ExceptionTypesTest extends TestCase
         return call_user_func_array($type.'::create', ['Message for static created exception', $previous]);
     }
 }
-
-/* EOF */
