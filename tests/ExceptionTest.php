@@ -57,7 +57,7 @@ class ExceptionTest extends TestCase
         $this->assertCount(7, $exception->getContextFileSnippet(3));
         $this->assertTrue(in_array(
             '    private function getException($message = \'A test exception\', array $replacements = [])',
-            $exception->getContextFileSnippet(10))
+            $exception->getContextFileSnippet(10), true)
         );
     }
 
