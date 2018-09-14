@@ -81,7 +81,7 @@ trait ExceptionInterpolateTrait
      *
      * @param string      $message The message string, which may contain anchors for vsprintf
      * @param mixed[]     $replace Array of replacements for the string
-     * @param string|null $default Default return value if interpolation does not complete successfully.
+     * @param string|null $default default return value if interpolation does not complete successfully
      *
      * @return null|string
      */
@@ -189,7 +189,7 @@ trait ExceptionInterpolateTrait
     {
         return [
             'string' => [
-                's'
+                's',
             ],
             'integer' => [
                 'd',
@@ -198,7 +198,7 @@ trait ExceptionInterpolateTrait
                 'o',
                 'x',
                 'X',
-                'b'
+                'b',
             ],
             'double' => [
                 'g',
@@ -206,7 +206,7 @@ trait ExceptionInterpolateTrait
                 'e',
                 'E',
                 'f',
-                'F'
+                'F',
             ],
         ];
     }
@@ -219,7 +219,7 @@ trait ExceptionInterpolateTrait
         return sprintf(
             '{%%([0-9-]+)?(?<type>[%s])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}',
             array_reduce(static::getAnchorTypeDefinitions(), function (string $all, array $types) {
-                return $all.implode($types);
+                return $all.implode('', $types);
             }, '')
         );
     }
