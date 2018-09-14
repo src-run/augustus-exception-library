@@ -11,7 +11,7 @@
 
 namespace SR\Exception;
 
-use SR\Utilities\ClassQuery;
+use SR\Utilities\Query\ClassQuery;
 
 trait ExceptionTrait
 {

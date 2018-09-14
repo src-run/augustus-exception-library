@@ -145,10 +145,10 @@ class ExceptionTest extends TestCase
         $this->assertSame('Second string with number: "100"', $exception->getMessage());
 
         $exception = $this->getException('Second string with number "%04d" and undefined string "%s"', [100]);
-        $this->assertSame('Second string with number "0100" and undefined string "<string:null>"', $exception->getMessage());
+        $this->assertSame('Second string with number "0100" and undefined string "[undefined (string)]"', $exception->getMessage());
 
         $exception = $this->getException('Second string with undefined number "%04d" and undefined string "%s"');
-        $this->assertSame('Second string with undefined number "<integer:null>" and undefined string "<string:null>"', $exception->getMessage());
+        $this->assertSame('Second string with undefined number "[undefined (integer)]" and undefined string "[undefined (string)]"', $exception->getMessage());
 
         $exception = $this->getException('Second string with number "%d" and string "%s"', [1, 'bar', 'foo-bar']);
         $this->assertSame('Second string with number "1" and string "bar"', $exception->getMessage());

@@ -34,7 +34,7 @@ trait ExceptionAttributesTrait
      * @param string $index Index string
      * @param mixed  $value Value to set
      *
-     * @return ExceptionInterface|ExceptionTrait
+     * @return ExceptionInterface|ExceptionTrait|ExceptionAttributesTrait
      */
     final public function setAttribute(string $index, $value): ExceptionInterface
     {

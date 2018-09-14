@@ -12,7 +12,7 @@
 namespace SR\Exception;
 
 use SR\Silencer\CallSilencerFactory;
-use SR\Utilities\ClassQuery;
+use SR\Utilities\Query\ClassQuery;
 
 trait ExceptionInterpolateTrait
 {
@@ -24,7 +24,7 @@ trait ExceptionInterpolateTrait
     /**
      * @var mixed[]
      */
-    private $inputReplacements = [];
+    private $inputReplace = [];
 
     /**
      * @return null|string
@@ -39,7 +39,7 @@ trait ExceptionInterpolateTrait
      */
     public function getInputReplacements(): array
     {
-        return $this->inputReplacements;
+        return $this->inputReplace;
     }
 
     /**
@@ -50,20 +50,16 @@ trait ExceptionInterpolateTrait
      *
      * @return \Throwable|null
      */
-    final protected function resolvePreviousException(array $parameters = [])
+    final protected function resolvePreviousException(array $parameters = []): ?\Throwable
     {
-        if (empty($thrown = self::filterThrowable($parameters))) {
-            return null;
-        }
-
-        return array_shift($thrown);
+        return self::filterThrowable($parameters)[0] ?? null;
     }
 
     /**
      * Handle compilation of the final message using a string value and an optional array of replacements. This internal
-     * function {@see vsprintf} is used, so reference it's documentation for acceptable placeholder syntax of the
+     * function {@see vsprintf} is used, so reference it's documentation for acceptable anchor syntax of the
      * string. Failure of the {@see vsprintf} call (which happens when, for example, the message string contains a
-     * different number of placeholder than the number of replacements provided) will not fail or return null, but
+     * different number of anchor than the number of replacements provided) will not fail or return null, but
      * instead return the message string in its un-compiled form.
      *
      * @param null|string $message
@@ -74,35 +70,30 @@ trait ExceptionInterpolateTrait
     final protected function resolveMessage(string $message = null, array $parameters = [])
     {
         $this->inputMessage = $message;
-        $this->inputReplacements = $replacements = self::filterNotThrowable($parameters);
+        $this->inputReplace = $replace = self::filterNotThrowable($parameters);
 
-        return self::interpolateMessage($message, $replacements, false)
-            ?: self::interpolateMessage($message, $replacements, true);
+        return self::interpolateMessage($message, $replace)
+            ?? self::interpolateMessage(self::removeExtraAnchors($message, $replace), $replace, $message);
     }
 
     /**
      * Try to compile message with provided string and replacement array.
      *
-     * @param string  $message                 The message string, which may contain placeholders for vsprintf
-     * @param mixed[] $replacements            Array of replacements for the string
-     * @param bool    $removeExtraPlaceholders If true extra placeholders will be removed from the string such that the
-     *                                         number of placeholders matches the number of replacements
+     * @param string      $message The message string, which may contain anchors for vsprintf
+     * @param mixed[]     $replace Array of replacements for the string
+     * @param string|null $default Default return value if interpolation does not complete successfully.
      *
      * @return null|string
      */
-    final private static function interpolateMessage(string $message, array $replacements, bool $removeExtraPlaceholders): ?string
+    final private static function interpolateMessage(string $message, array $replace, string $default = null): ?string
     {
-        if (true === $removeExtraPlaceholders) {
-            $message = self::removeExtraPlaceholders($message, count($replacements));
-        }
-
-        $result = CallSilencerFactory::create(function () use ($message, $replacements) {
-            return vsprintf($message, $replacements);
+        $result = CallSilencerFactory::create(function () use ($message, $replace) {
+            return vsprintf($message, $replace);
         }, function ($return) {
             return false !== $return && null !== $return && true !== empty($return);
         })->invoke();
 
-        return $result->isValid() ? $result->getReturn() : null;
+        return $result->isValid() ? $result->getReturn() : $default;
     }
 
     /**
@@ -114,11 +105,11 @@ trait ExceptionInterpolateTrait
      */
     final private static function filterNotThrowable(array $parameters): array
     {
-        return array_map(function ($v) {
+        return array_values(array_map(function ($v) {
             return self::stringifyValue($v);
         }, array_filter($parameters, function ($p) {
             return !ClassQuery::isThrowableEquitable($p);
-        }));
+        })));
     }
 
     /**
@@ -131,9 +122,9 @@ trait ExceptionInterpolateTrait
      */
     final private static function filterThrowable(array $parameters)
     {
-        return array_filter($parameters, function ($p) {
+        return array_values(array_filter($parameters, function ($p) {
             return ClassQuery::isThrowableEquitable($p);
-        });
+        }));
     }
 
     /**
@@ -155,45 +146,81 @@ trait ExceptionInterpolateTrait
     }
 
     /**
-     * Replaces the message's replacement placeholders (used by {@see compileMessage()} (beginning with the nth found,
+     * Replaces the message's replacement anchors (used by {@see compileMessage()} (beginning with the nth found,
      * as defined by the startAt parameter) with a type representation of the expected value.
      *
      * @param string $message
-     * @param int    $startAt
+     * @param array  $parameters
      *
      * @return string
      */
-    final private static function removeExtraPlaceholders(string $message, int $startAt = 0): string
+    final private static function removeExtraAnchors(string $message, array $parameters): string
     {
-        $regex = '{%([0-9-]+)?([sducoxXbgGeEfF])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}';
         $count = 0;
+        $start = count($parameters);
 
-        return preg_replace_callback($regex, function ($match) use ($startAt, &$count) {
-            return ++$count > $startAt ? sprintf('<%s:null>', self::describePlaceholder($match[2])) : $match[0];
+        return preg_replace_callback(self::getAnchorSearchRegex(), function ($match) use ($start, &$count) {
+            return ++$count > $start ? self::getAnchorTypeDescription($match['type']) : $match[0];
         }, $message);
     }
 
     /**
-     * Expand placeholder (such as %s or %d) used in message to its full type name (such as string or integer).
+     * Expand anchor (such as %s or %d) used in message to its full type name (such as string or integer).
      *
-     * @param string $placeholder
+     * @param string $anchor
      *
      * @return string
      */
-    final private static function describePlaceholder(string $placeholder): string
+    final private static function getAnchorTypeDescription(string $anchor): string
     {
-        $maps = [
-            'string' => ['s'],
-            'integer' => ['d', 'u', 'c', 'o', 'x', 'X', 'b'],
-            'double' => ['g', 'G', 'e', 'E', 'f', 'F'],
-        ];
-
-        foreach ($maps as $name => $chars) {
-            if (in_array($placeholder, $chars, true)) {
-                $description = $name;
+        foreach (static::getAnchorTypeDefinitions() as $type => $characters) {
+            if (in_array($anchor, $characters, true)) {
+                $desc = sprintf('[undefined (%s)]', $type);
             }
         }
 
-        return $description ?? 'unknown';
+        return $desc ?? '[undefined]';
+    }
+
+    /**
+     * @return array[]
+     */
+    final private static function getAnchorTypeDefinitions(): array
+    {
+        return [
+            'string' => [
+                's'
+            ],
+            'integer' => [
+                'd',
+                'u',
+                'c',
+                'o',
+                'x',
+                'X',
+                'b'
+            ],
+            'double' => [
+                'g',
+                'G',
+                'e',
+                'E',
+                'f',
+                'F'
+            ],
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    final private static function getAnchorSearchRegex(): string
+    {
+        return sprintf(
+            '{%%([0-9-]+)?(?<type>[%s])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}',
+            array_reduce(static::getAnchorTypeDefinitions(), function (string $all, array $types) {
+                return $all.implode($types);
+            }, '')
+        );
     }
 }
