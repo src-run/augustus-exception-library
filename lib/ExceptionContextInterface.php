@@ -25,7 +25,7 @@ interface ExceptionContextInterface extends \Throwable
     /**
      * Returns the reflection class of the thrown exception's context.
      *
-     * @return null|\ReflectionClass
+     * @return \ReflectionClass|null
      */
     public function getContextClass(): ?\ReflectionClass;
 
@@ -34,14 +34,14 @@ interface ExceptionContextInterface extends \Throwable
      *
      * @param bool $qualified
      *
-     * @return null|string
+     * @return string|null
      */
     public function getContextClassName(bool $qualified = true): ?string;
 
     /**
      * Returns the reflection method of the thrown exception's context.
      *
-     * @return null|\ReflectionMethod
+     * @return \ReflectionMethod|null
      */
     public function getContextMethod(): ?\ReflectionMethod;
 
@@ -50,7 +50,7 @@ interface ExceptionContextInterface extends \Throwable
      *
      * @param bool $qualified
      *
-     * @return null|string
+     * @return string|null
      */
     public function getContextMethodName(bool $qualified = false): ?string;
 

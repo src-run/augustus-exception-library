@@ -28,7 +28,7 @@ interface ExceptionAttributesInterface extends \Throwable
      *
      * @return ExceptionInterface
      */
-    public function setAttribute(string $index, $value);
+    public function setAttribute(string $index, $value): ExceptionInterface;
 
     /**
      * Returns true if an attribute with the specified index exists.
@@ -44,7 +44,7 @@ interface ExceptionAttributesInterface extends \Throwable
      *
      * @param string $index The attribute index to search for
      *
-     * @return null|mixed
+     * @return mixed|null
      */
     public function getAttribute(string $index);
 }

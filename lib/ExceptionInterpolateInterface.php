@@ -14,17 +14,17 @@ namespace SR\Exception;
 interface ExceptionInterpolateInterface extends \Throwable
 {
     /**
-     * @param null|string $message
+     * @param string|null $message
      * @param mixed       ...$parameters
      *
      * @return ExceptionInterface
      */
-    public static function create(string $message = null, ...$parameters);
+    public static function create(string $message = null, ...$parameters): ExceptionInterface;
 
     /**
-     * @return null|string
+     * @return string|null
      */
-    public function getInputMessage(): ?string;
+    public function getInputMessageFormat(): ?string;
 
     /**
      * @return array

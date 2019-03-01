@@ -13,21 +13,9 @@ namespace SR\Exception\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
-use SR\Exception\Logic\BadFunctionCallException;
-use SR\Exception\Logic\BadMethodCallException;
-use SR\Exception\Logic\DomainException;
-use SR\Exception\Logic\InvalidArgumentException;
-use SR\Exception\Logic\LengthException;
-use SR\Exception\Logic\LogicException;
-use SR\Exception\Logic\OutOfRangeException;
-use SR\Exception\Runtime\OutOfBoundsException;
-use SR\Exception\Runtime\OverflowException;
-use SR\Exception\Runtime\RangeException;
-use SR\Exception\Runtime\RuntimeException;
-use SR\Exception\Runtime\UnderflowException;
-use SR\Exception\Runtime\UnexpectedValueException;
-use SR\Utilities\ClassQuery;
+use SR\Exception\Tests\Fixtures\ExceptionTypes;
 use SR\Utilities\Context\FileContextInterface;
+use SR\Utilities\Query\ClassQuery;
 
 /**
  * @covers \SR\Exception\Exception
@@ -50,24 +38,11 @@ class ExceptionTypesTest extends TestCase
     /**
      * @return string[]
      */
-    public function getTypes()
+    public function getTypes(): array
     {
-        return [
-            [BadFunctionCallException::class],
-            [BadMethodCallException::class],
-            [DomainException::class],
-            [InvalidArgumentException::class],
-            [LengthException::class],
-            [LogicException::class],
-            [OutOfRangeException::class],
-            [OutOfBoundsException::class],
-            [OverflowException::class],
-            [RangeException::class],
-            [RuntimeException::class],
-            [UnderflowException::class],
-            [UnexpectedValueException::class],
-            [Exception::class],
-        ];
+        return ExceptionTypes::getExceptionClasses(function (string $name): array {
+            return [$name];
+        });
     }
 
     /**
@@ -75,43 +50,44 @@ class ExceptionTypesTest extends TestCase
      *
      * @param string $type
      */
-    public function testBasicFunctionality($type)
+    public function testBasicFunctionality($type): void
     {
-        $previous = $this->getException(Exception::class);
-        $exception = $this->getException($type, $previous);
+        $p = $this->getException(Exception::class);
+        $e = $this->getException($type, $p);
 
-        $this->assertNotNull($exception->getMessage());
-        $this->assertNotNull($exception->getCode());
-        $this->assertNotNull($exception->getLine());
-        $this->assertInstanceOf(FileContextInterface::class, $exception->getContext());
-        $this->assertSame(__FILE__, $exception->getFile());
-        $this->assertSame(__FILE__, $exception->getContext()->getFile()->getPathname());
-        $this->assertSame(__CLASS__, $exception->getContextClassName());
-        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
-        $this->assertSame('getException', $exception->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethodName(true));
-        $this->assertSame($previous, $exception->getPrevious());
+        $this->assertNotNull($e->getMessage());
+        $this->assertNotNull($e->getCode());
+        $this->assertNotNull($e->getLine());
+        $this->assertInstanceOf(FileContextInterface::class, $e->getContext());
+        $this->assertSame(__FILE__, $e->getFile());
+        $this->assertSame(__FILE__, $e->getContext()->getFile()->getPathname());
+        $this->assertSame(__CLASS__, $e->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
+        $this->assertSame('getException', $e->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getException', $e->getContextMethodName(true));
+        $this->assertSame($p, $e->getPrevious());
 
-        $exception = $this->getExceptionStatic($type, $previous);
-        $this->assertSame(__FILE__, $exception->getFile());
-        $this->assertSame(__FILE__, $exception->getContext()->getFile()->getPathname());
-        $this->assertSame(__CLASS__, $exception->getContextClassName());
-        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
-        $this->assertSame('getExceptionStatic', $exception->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getExceptionStatic', $exception->getContextMethodName(true));
-        $this->assertSame($previous, $exception->getPrevious());
+        $e = $this->getExceptionStatic($type, $p);
+        $this->assertSame(__FILE__, $e->getFile());
+        $this->assertSame(__FILE__, $e->getContext()->getFile()->getPathname());
+        $this->assertSame(__CLASS__, $e->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
+        $this->assertSame('getExceptionStatic', $e->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getExceptionStatic', $e->getContextMethodName(true));
+        $this->assertSame($p, $e->getPrevious());
     }
 
     /**
-     * @param string $type
-     * @param string $message
-     * @param array  $replace
+     * @param string          $type
+     * @param \Exception|null $previous
+     * @param string          $message
+     * @param mixed[]         $replace
      *
      * @return Exception
      */
     private function getException(string $type, \Exception $previous = null, string $message = 'Exception message', array $replace = []): \Exception
     {
-        return new $type($message, ...array_merge($replace, $previous ? [$previous] : []));
+        return new $type($message, ...array_merge($replace, array_filter([$previous])));
     }
 
     /**
@@ -122,6 +98,8 @@ class ExceptionTypesTest extends TestCase
      */
     private function getExceptionStatic(string $type, \Exception $previous): \Exception
     {
-        return call_user_func_array($type.'::create', ['Message for static created exception', $previous]);
+        return call_user_func(
+            sprintf('%s::create', $type), 'Message for static created exception', $previous
+        );
     }
 }

@@ -13,7 +13,9 @@ namespace SR\Exception\Tests;
 
 use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
-use SR\Utilities\ClassQuery;
+use SR\Exception\ExceptionInterface;
+use SR\Exception\Tests\Fixtures\ExceptionTypes;
+use SR\Utilities\Query\ClassQuery;
 
 /**
  * @covers \SR\Exception\Exception
@@ -25,74 +27,128 @@ use SR\Utilities\ClassQuery;
  */
 class ExceptionTest extends TestCase
 {
-    public function testGetInput()
+    public function testGetInput(): void
     {
         $m = 'A simple %s with %d replacements.';
         $r = ['string', 2];
         $i = ['string', '2'];
 
-        $e1 = $this->getException($m, $r);
-        $this->assertSame($m, $e1->getInputMessage());
+        $e1 = $this->getExceptionUsingNewKeyword($m, $r);
+        $this->assertSame($m, $e1->getInputMessageFormat());
         $this->assertSame($i, $e1->getInputReplacements());
 
-        $e2 = $this->getException($m, array_merge($r, [$e1]));
-        $this->assertSame($m, $e2->getInputMessage());
+        $e2 = $this->getExceptionUsingNewKeyword($m, array_merge($r, [$e1]));
+        $this->assertSame($m, $e2->getInputMessageFormat());
         $this->assertSame($i, $e2->getInputReplacements());
     }
 
-    public function testGetMethodAndClassContext()
+    public function testGetMethodAndClassContext(): void
     {
-        $exception = $this->getException();
-        $this->assertSame('getException', $exception->getContextMethod()->getShortName());
-        $this->assertSame('getException', $exception->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getException', $exception->getContextMethodName(true));
-        $this->assertSame(__CLASS__, $exception->getContextClass()->getName());
-        $this->assertSame(__CLASS__, $exception->getContextClassName());
-        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $exception->getContextClassName(false));
+        $e = $this->getExceptionUsingNewKeyword();
+        $this->assertSame('getExceptionUsingNewKeyword', $e->getContextMethod()->getShortName());
+        $this->assertSame('getExceptionUsingNewKeyword', $e->getContextMethodName());
+        $this->assertSame(__CLASS__.'::getExceptionUsingNewKeyword', $e->getContextMethodName(true));
+        $this->assertSame(__CLASS__, $e->getContextClass()->getName());
+        $this->assertSame(__CLASS__, $e->getContextClassName());
+        $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
     }
 
-    public function testFileDiff()
+    /**
+     * @return \Generator
+     */
+    public static function provideFileDiffContextSize(): \Generator
     {
-        $exception = $this->getException('A %s.', ['message']);
-        $this->assertCount(7, $exception->getContextFileSnippet(3));
-        $this->assertTrue(in_array(
-            '    private function getException($message = \'A test exception\', array $replacements = [])',
-            $exception->getContextFileSnippet(10), true)
-        );
+        $methods = [
+            [ExceptionTypes::class, 'createRandomException', false],
+            [ExceptionTypes::class, 'createRandomException', true],
+        ];
+
+        foreach ($methods as [$class, $method, $static]) {
+            foreach (range(1, self::getMethodMinSourceLinesFromStartOrUntilEnd($class, $method)) as $lineCount) {
+                yield [$class, $method, $static, $lineCount];
+            }
+        }
     }
 
-    public function testDefaults()
+    /**
+     * @dataProvider provideFileDiffContextSize
+     *
+     * @param string $class
+     * @param string $method
+     * @param bool   $static
+     * @param int    $lines
+     */
+    public function testFileDiffContext(string $class, string $method, bool $static, int $lines): void
     {
-        $exception = $this->getException('A %s.', ['message']);
-        $this->assertSame('A message.', $exception->getMessage());
+        $e = call_user_func(sprintf('%s::%s', $class, $method), $this, $static);
 
-        $exception = $this->getException();
-        $this->assertNotNull($exception->getMessage());
-        $this->assertNotNull($exception->getCode());
+        $this->assertContains(count($e->getContextFileSnippet($lines)), [
+            ($lines * 2) - 1,
+            ($lines * 2),
+            ($lines * 2) + 1,
+        ]);
+
+        foreach ($s = self::getMethodSourceLines($class, $method) as $l) {
+            $this->assertContains($l, $e->getContextFileSnippet(count($s)));
+        }
     }
 
-    public function testToString()
+    public function testFileDiff(): void
     {
-        $exception = $this->getException();
-        $attributes = [
+        $e = $this->getExceptionUsingNewKeyword('A %s.', ['message']);
+        $m = self::getMethodMinSourceLinesFromStartOrUntilEnd($this, 'getExceptionUsingNewKeyword');
+
+        for ($i = 1; $i < $m / 2; ++$i) {
+            $this->assertCount(($i * 2) + 1, $e->getContextFileSnippet($i));
+        }
+
+        foreach (self::getMethodSourceLines($this, 'getExceptionUsingNewKeyword') as $l) {
+            $this->assertContains($l, $e->getContextFileSnippet(10));
+        }
+
+        $e = $this->getExceptionUsingStaticFunc('A %s.', ['message']);
+
+        for ($i = 1; $i < 6; ++$i) {
+            $this->assertCount(($i * 2) + 1, $e->getContextFileSnippet($i));
+        }
+
+        foreach (self::getMethodSourceLines($this, 'getExceptionUsingStaticFunc') as $l) {
+            $this->assertContains($l, $e->getContextFileSnippet(10));
+        }
+    }
+
+    public function testDefaults(): void
+    {
+        $e = $this->getExceptionUsingNewKeyword('A %s.', ['message']);
+        $this->assertSame('A message.', $e->getMessage());
+
+        $e = $this->getExceptionUsingNewKeyword();
+        $this->assertNotNull($e->getMessage());
+        $this->assertNotNull($e->getCode());
+    }
+
+    public function testToString(): void
+    {
+        $e = $this->getExceptionUsingNewKeyword();
+        $a = [
             'index-01' => 'value-01',
             'index-02' => 'value-02',
         ];
 
-        $this->assertRegExp('{Exception: A test exception \(in "[^"]+" at "[^"]+"}', $exception->__toString());
+        $this->assertRegExp('{Exception: A test exception \(in "[^"]+" at "[^"]+"}', $e->__toString());
 
-        foreach ($attributes as $i => $a) {
-            $exception->setAttribute($i, $a);
+        foreach ($a as $i => $v) {
+            $e->setAttribute($i, $v);
         }
-        $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $exception->__toString());
+        $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $e->__toString());
     }
 
-    public function testStringifyComplex()
+    public function testStringifyComplex(): void
     {
         $a = new class() {
             private $inner;
 
-            public function setInner($inner)
+            public function setInner($inner): void
             {
                 $this->inner = $inner;
             }
@@ -101,7 +157,7 @@ class ExceptionTest extends TestCase
         $b = new class() {
             private $inner;
 
-            public function setInner($inner)
+            public function setInner($inner): void
             {
                 $this->inner = $inner;
             }
@@ -117,120 +173,169 @@ class ExceptionTest extends TestCase
         $b->setInner($a);
         $a->setInner($b);
 
-        $e = $this->getException('Complex stringify replacements like "%s" and "%s" and "%s"', [$a, [$a, $b], $c]);
+        $e = $this->getExceptionUsingNewKeyword('Complex stringify replacements like "%s" and "%s" and "%s"', [$a, [$a, $b], $c]);
         $this->assertNotNull($e->getMessage());
         $this->assertStringMatchesFormat('%sabcdef0123%s', $e->getMessage());
     }
 
-    public function testType()
+    public function testType(): void
     {
-        $this->assertRegExp('{^Exception$}', $this->getException()->getType());
-        $this->assertRegExp('{^SR\\\}', $this->getException()->getType(true));
+        $this->assertRegExp('{^Exception$}', $this->getExceptionUsingNewKeyword()->getType());
+        $this->assertRegExp('{^SR\\\}', $this->getExceptionUsingNewKeyword()->getType(true));
     }
 
-    public function testTypeQualified()
+    public function testTypeQualified(): void
     {
-        $exception = $this->getException();
+        $e = $this->getExceptionUsingNewKeyword();
 
-        $this->assertNotRegExp('{^Exception$}', $exception->getType(true));
-        $this->assertRegExp('{Exception$}', $exception->getType(true));
+        $this->assertNotRegExp('{^Exception$}', $e->getType(true));
+        $this->assertRegExp('{Exception$}', $e->getType(true));
     }
 
-    public function testCompileMessage()
+    public function testCompileMessage(): void
     {
-        $exception = $this->getException('A %s with number: "%d"', ['string', 10]);
-        $this->assertSame('A string with number: "10"', $exception->getMessage());
+        $e = $this->getExceptionUsingNewKeyword('A %s with number: "%d"', ['string', 10]);
+        $this->assertSame('A string with number: "10"', $e->getMessage());
 
-        $exception = $this->getException('Second string with number: "%d"', [100]);
-        $this->assertSame('Second string with number: "100"', $exception->getMessage());
+        $e = $this->getExceptionUsingNewKeyword('Second string with number: "%d"', [100]);
+        $this->assertSame('Second string with number: "100"', $e->getMessage());
 
-        $exception = $this->getException('Second string with number "%04d" and undefined string "%s"', [100]);
-        $this->assertSame('Second string with number "0100" and undefined string "[undefined (string)]"', $exception->getMessage());
+        $e = $this->getExceptionUsingNewKeyword('Second string with number "%04d" and undefined string "%s"', [100]);
+        $this->assertSame('Second string with number "0100" and undefined string "[undefined (string)]"', $e->getMessage());
 
-        $exception = $this->getException('Second string with undefined number "%04d" and undefined string "%s"');
-        $this->assertSame('Second string with undefined number "[undefined (integer)]" and undefined string "[undefined (string)]"', $exception->getMessage());
+        $e = $this->getExceptionUsingNewKeyword('Second string with undefined number "%04d" and undefined string "%s"');
+        $this->assertSame('Second string with undefined number "[undefined (integer)]" and undefined string "[undefined (string)]"', $e->getMessage());
 
-        $exception = $this->getException('Second string with number "%d" and string "%s"', [1, 'bar', 'foo-bar']);
-        $this->assertSame('Second string with number "1" and string "bar"', $exception->getMessage());
+        $e = $this->getExceptionUsingNewKeyword('Second string with number "%d" and string "%s"', [1, 'bar', 'foo-bar']);
+        $this->assertSame('Second string with number "1" and string "bar"', $e->getMessage());
     }
 
-    public function testCreate()
+    public function testCreate(): void
     {
-        $exception = Exception::create();
+        $e = Exception::create();
 
-        $this->assertRegExp('{ExceptionTest.php$}', $exception->getFile());
+        $this->assertRegExp('{ExceptionTest.php$}', $e->getFile());
     }
 
-    public function testToArray()
+    public function testToArray(): void
     {
-        $exception = new Exception();
-        $exported = $exception->__toArray();
+        $e = new Exception();
+        $a = $e->__toArray();
 
         foreach (['type', 'message', 'code', 'class', 'method', 'file-name', 'file-line', 'file-diff', 'attributes', 'traceable'] as $key) {
-            $this->assertArrayHasKey($key, $exported);
+            $this->assertArrayHasKey($key, $a);
         }
 
-        $this->assertSame($exception->getTrace(), $exported['traceable']());
+        $this->assertSame($e->getTrace(), $a['traceable']());
     }
 
-    public function testPrevious()
+    public function testPrevious(): void
     {
-        $exception = new Exception('', $previous = new Exception());
+        $e = new Exception('', $p = new Exception());
 
-        $this->assertSame($previous, $exception->getPrevious());
+        $this->assertSame($p, $e->getPrevious());
     }
 
-    public function testAttributes()
+    public function testAttributes(): void
     {
-        $exception = new Exception('', $previous = new Exception());
-        $attributes = [
+        $e = new Exception('', $p = new Exception());
+        $a = [
             'index-01' => 'value-01',
             'index-02' => 'value-02',
         ];
 
-        foreach ($attributes as $i => $v) {
-            $this->assertFalse($exception->hasAttribute($i));
-            $exception->setAttribute($i, $v);
-            $this->assertSame($v, $exception->getAttribute($i));
-            $this->assertTrue($exception->hasAttribute($i));
+        foreach ($a as $i => $v) {
+            $this->assertFalse($e->hasAttribute($i));
+            $e->setAttribute($i, $v);
+            $this->assertSame($v, $e->getAttribute($i));
+            $this->assertTrue($e->hasAttribute($i));
         }
     }
 
     /**
      * @return \PHPUnit_Framework_MockObject_MockObject|Exception
      */
-    public function getExceptionMock()
+    public function getExceptionMock(): \PHPUnit_Framework_MockObject_MockObject
     {
-        return $this->getMockBuilder(Exception::class)
+        return $this
+            ->getMockBuilder(Exception::class)
             ->disableOriginalConstructor()
             ->getMock();
     }
 
-    public function testToStringExceptionNotThrownOnBadContext()
+    public function testToStringExceptionNotThrownOnBadContext(): void
     {
-        $exception = $this->getExceptionMock();
-        $exception->__construct('Mock exception');
+        $e = $this->getExceptionMock();
+        $e->__construct('Mock exception');
 
-        $reflection = new \ReflectionObject($exception);
-        $property = $reflection->getProperty('file');
-        $property->setAccessible(true);
-        $property->setValue($exception, realpath(__DIR__.'/Fixtures/NoClass.php'));
+        try {
+            $r = new \ReflectionObject($e);
+            $p = $r->getProperty('file');
+            $p->setAccessible(true);
+            $p->setValue($e, realpath(__DIR__.'/Fixtures/NoClass.php'));
+        } catch (\ReflectionException $e) {
+            $this->fail(sprintf(
+                'Failed to create reflection object for "%s" or to resolve property "file" of same.', get_class($e)
+            ));
+        }
 
-        $this->assertNull($exception->getContextClass());
-        $this->assertNull($exception->getContextClassName());
-        $this->assertNull($exception->getContextMethod());
-        $this->assertNull($exception->getContextMethodName());
-        $this->assertCount(0, $exception->getContextFileSnippet());
+        $this->assertNull($e->getContextClass());
+        $this->assertNull($e->getContextClassName());
+        $this->assertNull($e->getContextMethod());
+        $this->assertNull($e->getContextMethodName());
+        $this->assertCount(0, $e->getContextFileSnippet());
     }
 
     /**
      * @param string $message
      * @param array  $replacements
      *
-     * @return Exception
+     * @return ExceptionInterface|Exception
      */
-    private function getException($message = 'A test exception', array $replacements = [])
+    private function getExceptionUsingNewKeyword($message = 'A test exception', array $replacements = []): ExceptionInterface
     {
         return new Exception($message, ...$replacements);
+    }
+
+    /**
+     * @param string $message
+     * @param array  $replacements
+     *
+     * @return ExceptionInterface|Exception
+     */
+    private function getExceptionUsingStaticFunc($message = 'A test exception', array $replacements = []): ExceptionInterface
+    {
+        return Exception::create($message, ...$replacements);
+    }
+
+    /**
+     * @param object|string $object
+     * @param string        $method
+     *
+     * @return array
+     */
+    private static function getMethodSourceLines($object, string $method): array
+    {
+        $m = ClassQuery::getNonAccessibleMethodReflection($method, $object);
+
+        return array_map(function (string $line): string {
+            return trim($line, "\n");
+        }, array_slice(file($m->getFileName()), $m->getStartLine() - 1, $m->getEndLine() - $m->getStartLine() + 1));
+    }
+
+    /**
+     * @param object|string $object
+     * @param string        $method
+     *
+     * @return int
+     */
+    private static function getMethodMinSourceLinesFromStartOrUntilEnd($object, string $method): int
+    {
+        $m = ClassQuery::getNonAccessibleMethodReflection($method, $object);
+
+        return min(
+            $position = floor(($m->getStartLine() + $m->getEndLine()) / 2),
+            count(file($m->getFileName())) - $position
+        );
     }
 }

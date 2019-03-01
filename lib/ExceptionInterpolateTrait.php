@@ -11,35 +11,61 @@
 
 namespace SR\Exception;
 
+use SR\Exception\Utility\Dumper\Transformer\StringTransformer;
 use SR\Silencer\CallSilencerFactory;
-use SR\Utilities\Query\ClassQuery;
 
 trait ExceptionInterpolateTrait
 {
     /**
      * @var string
      */
-    private $inputMessage;
+    private $inputMessageFormat;
 
     /**
      * @var mixed[]
      */
-    private $inputReplace = [];
+    private $inputReplacements = [];
 
     /**
-     * @return null|string
+     * @var array[]
      */
-    public function getInputMessage(): ?string
+    private static $anchorTypes = [
+        'string' => [
+            's',
+        ],
+        'integer' => [
+            'd',
+            'u',
+            'c',
+            'o',
+            'x',
+            'X',
+            'b',
+        ],
+        'double' => [
+            'g',
+            'G',
+            'e',
+            'E',
+            'f',
+            'F',
+        ],
+    ];
+
+    /**
+     * @return string|null
+     */
+    final public function getInputMessageFormat(): ?string
     {
-        return $this->inputMessage;
+        return $this->inputMessageFormat;
     }
 
     /**
      * @return array
      */
-    public function getInputReplacements(): array
+    final public function getInputReplacements(): array
     {
-        return $this->inputReplace;
+        return $this->inputReplacements;
     }
 
     /**
@@ -62,15 +88,15 @@ trait ExceptionInterpolateTrait
      * different number of anchor than the number of replacements provided) will not fail or return null, but
      * instead return the message string in its un-compiled form.
      *
-     * @param null|string $message
+     * @param string|null $message
      * @param mixed[]     $parameters
      *
      * @return string|null
      */
-    final protected function resolveMessage(string $message = null, array $parameters = [])
+    final protected function resolveMessage(string $message = null, array $parameters = []): ?string
     {
-        $this->inputMessage = $message;
-        $this->inputReplace = $replace = self::filterNotThrowable($parameters);
+        $this->inputMessageFormat = $message;
+        $this->inputReplacements = $replace = self::filterNotThrowable($parameters);
 
         return self::interpolateMessage($message, $replace)
             ?? self::interpolateMessage(self::removeExtraAnchors($message, $replace), $replace, $message);
@@ -83,9 +109,9 @@ trait ExceptionInterpolateTrait
      * @param mixed[]     $replace Array of replacements for the string
      * @param string|null $default default return value if interpolation does not complete successfully
      *
-     * @return null|string
+     * @return string|null
      */
-    final private static function interpolateMessage(string $message, array $replace, string $default = null): ?string
+    private static function interpolateMessage(string $message, array $replace, string $default = null): ?string
     {
         $result = CallSilencerFactory::create(function () use ($message, $replace) {
             return vsprintf($message, $replace);
@@ -103,12 +129,12 @@ trait ExceptionInterpolateTrait
      *
      * @return mixed[]
      */
-    final private static function filterNotThrowable(array $parameters): array
+    private static function filterNotThrowable(array $parameters): array
     {
         return array_values(array_map(function ($v) {
-            return self::stringifyValue($v);
+            return (new StringTransformer())($v);
         }, array_filter($parameters, function ($p) {
-            return !ClassQuery::isThrowableEquitable($p);
+            return !$p instanceof \Throwable;
         })));
     }
 
@@ -120,29 +146,11 @@ trait ExceptionInterpolateTrait
      *
      * @return \Throwable[]
      */
-    final private static function filterThrowable(array $parameters)
+    private static function filterThrowable(array $parameters): array
     {
         return array_values(array_filter($parameters, function ($p) {
-            return ClassQuery::isThrowableEquitable($p);
+            return $p instanceof \Throwable;
         }));
-    }
-
-    /**
-     * Returns a scalar representation of the passed value.
-     *
-     * @param mixed $value
-     *
-     * @return string
-     */
-    final private static function stringifyValue($value)
-    {
-        if (is_scalar($value) || method_exists($value, '__toString')) {
-            return (string) $value;
-        }
-
-        return trim(preg_replace('{\s+}', ' ', preg_replace(
-            '{\n[\s\t]*}', ' ', @var_export($value, true) ?? @print_r($value, true))
-        ), ' ');
     }
 
     /**
@@ -154,13 +162,13 @@ trait ExceptionInterpolateTrait
      *
      * @return string
      */
-    final private static function removeExtraAnchors(string $message, array $parameters): string
+    private static function removeExtraAnchors(string $message, array $parameters): string
     {
         $count = 0;
         $start = count($parameters);
 
-        return preg_replace_callback(self::getAnchorSearchRegex(), function ($match) use ($start, &$count) {
-            return ++$count > $start ? self::getAnchorTypeDescription($match['type']) : $match[0];
+        return preg_replace_callback(self::buildAnchorRegex(), function ($match) use ($start, &$count) {
+            return ++$count > $start ? self::describeAnchor($match['type']) : $match[0];
         }, $message);
     }
 
@@ -171,9 +179,9 @@ trait ExceptionInterpolateTrait
      *
      * @return string
      */
-    final private static function getAnchorTypeDescription(string $anchor): string
+    private static function describeAnchor(string $anchor): string
     {
-        foreach (static::getAnchorTypeDefinitions() as $type => $characters) {
+        foreach (static::$anchorTypes as $type => $characters) {
             if (in_array($anchor, $characters, true)) {
                 $desc = sprintf('[undefined (%s)]', $type);
             }
@@ -183,43 +191,14 @@ trait ExceptionInterpolateTrait
     }
 
     /**
-     * @return array[]
-     */
-    final private static function getAnchorTypeDefinitions(): array
-    {
-        return [
-            'string' => [
-                's',
-            ],
-            'integer' => [
-                'd',
-                'u',
-                'c',
-                'o',
-                'x',
-                'X',
-                'b',
-            ],
-            'double' => [
-                'g',
-                'G',
-                'e',
-                'E',
-                'f',
-                'F',
-            ],
-        ];
-    }
-
-    /**
      * @return string
      */
-    final private static function getAnchorSearchRegex(): string
+    private static function buildAnchorRegex(): string
     {
         return sprintf(
             '{%%([0-9-]+)?(?<type>[%s])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}',
-            array_reduce(static::getAnchorTypeDefinitions(), function (string $all, array $types) {
-                return $all.implode('', $types);
+            array_reduce(static::$anchorTypes, function (string $all, array $types) {
+                return sprintf('%s%s', $all, implode('', $types));
             }, '')
         );
     }

@@ -60,7 +60,7 @@ trait ExceptionAttributesTrait
      *
      * @param string $index The attribute index to search for
      *
-     * @return null|mixed
+     * @return mixed|null
      */
     final public function getAttribute(string $index)
     {

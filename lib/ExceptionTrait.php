@@ -11,6 +11,7 @@
 
 namespace SR\Exception;
 
+use SR\Exception\Utility\Dumper\Transformer\StringTransformer;
 use SR\Utilities\Query\ClassQuery;
 
 trait ExceptionTrait
@@ -23,7 +24,7 @@ trait ExceptionTrait
      * Constructor accepts message string and any number of parameters, which will be used as string replacements for
      * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
      *
-     * @param null|string $message
+     * @param string|null $message
      * @param mixed       ...$parameters
      */
     public function __construct(string $message = null, ...$parameters)
@@ -78,7 +79,7 @@ trait ExceptionTrait
     }
 
     /**
-     * @param null|string $message
+     * @param string|null $message
      * @param mixed       ...$parameters
      *
      * @return ExceptionInterface|ExceptionTrait
@@ -112,30 +113,30 @@ trait ExceptionTrait
     }
 
     /**
-     * @param object $instance
-     * @param string $class
-     * @param string $function
+     * @param        $instance
+     * @param string $instType
+     * @param string $funcName
      */
-    final private static function assignInstancePropertiesFromTrace($instance, string $class, string $function)
+    private static function assignInstancePropertiesFromTrace($instance, string $instType, string $funcName): void
     {
         ClassQuery::setNonAccessiblePropertyValue(
-            'file', $instance, ($rc = ClassQuery::getReflection($class))->getFileName()
+            'file', $instance, ClassQuery::getReflection($instType)->getFileName()
         );
 
         ClassQuery::setNonAccessiblePropertyValue(
-            'line', $instance, $rc->getMethod($function)->getStartLine()
+            'line', $instance, ClassQuery::getNonAccessibleMethodReflection($funcName, $instType)->getStartLine()
         );
     }
 
     /**
      * @return string
      */
-    final private function attributesToString(): string
+    private function attributesToString(): string
     {
         $attributes = $this->getAttributes();
 
         array_walk($attributes, function (&$value, $name) {
-            $value = sprintf('[%s]=%s', $name, $this->stringifyValue($value));
+            $value = sprintf('[%s]=%s', $name, (new StringTransformer())($value));
         });
 
         return implode(', ', $attributes);

@@ -38,7 +38,7 @@ trait ExceptionContextTrait
     /**
      * Returns the reflection class of the thrown exception's context.
      *
-     * @return null|\ReflectionClass
+     * @return \ReflectionClass|null
      */
     final public function getContextClass(): ?\ReflectionClass
     {
@@ -54,7 +54,7 @@ trait ExceptionContextTrait
      *
      * @param bool $qualified
      *
-     * @return null|string
+     * @return string|null
      */
     final public function getContextClassName(bool $qualified = true): ?string
     {
@@ -68,7 +68,7 @@ trait ExceptionContextTrait
     /**
      * Returns the reflection method of the thrown exception's context.
      *
-     * @return null|\ReflectionMethod
+     * @return \ReflectionMethod|null
      */
     final public function getContextMethod(): ?\ReflectionMethod
     {
@@ -84,7 +84,7 @@ trait ExceptionContextTrait
      *
      * @param bool $qualified
      *
-     * @return null|string
+     * @return string|null
      */
     final public function getContextMethodName(bool $qualified = false): ?string
     {
