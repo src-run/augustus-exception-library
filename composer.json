@@ -19,15 +19,15 @@
     }
   ],
   "require": {
-    "php": "~7.1",
-    "src-run/augustus-utility-library": "^0.9.0",
-    "src-run/cocoa-var-dumper-library": "^0.2.0"
+    "php": "^7.1",
+    "src-run/augustus-utility-library": "^0.9",
+    "src-run/cocoa-var-dumper-library": "^0.3"
   },
   "require-dev": {
-    "codacy/coverage": "~1.0",
-    "friendsofphp/php-cs-fixer": "~2.0",
-    "php-coveralls/php-coveralls": "^2.0",
-    "symfony/phpunit-bridge": "~4.0"
+    "codacy/coverage": "^1.4",
+    "friendsofphp/php-cs-fixer": "^2.13",
+    "php-coveralls/php-coveralls": "^2.1",
+    "symfony/phpunit-bridge": "^4.1"
   },
   "autoload": {
     "psr-4": {
@@ -46,7 +46,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "0.9-dev"
+      "dev-master": "0.10-dev"
     }
   }
 }
