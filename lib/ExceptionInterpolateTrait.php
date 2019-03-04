@@ -12,7 +12,7 @@
 namespace SR\Exception;
 
 use SR\Exception\Utility\Dumper\Transformer\StringTransformer;
-use SR\Silencer\CallSilencerFactory;
+use SR\Exception\Utility\Interpolator\StringInterpolator;
 
 trait ExceptionInterpolateTrait
 {
@@ -25,32 +25,6 @@ trait ExceptionInterpolateTrait
      * @var mixed[]
      */
     private $inputReplacements = [];
-
-    /**
-     * @var array[]
-     */
-    private static $anchorTypes = [
-        'string' => [
-            's',
-        ],
-        'integer' => [
-            'd',
-            'u',
-            'c',
-            'o',
-            'x',
-            'X',
-            'b',
-        ],
-        'double' => [
-            'g',
-            'G',
-            'e',
-            'E',
-            'f',
-            'F',
-        ],
-    ];
 
     /**
      * @return string|null
@@ -95,31 +69,9 @@ trait ExceptionInterpolateTrait
      */
     final protected function resolveMessage(string $message = null, array $parameters = []): ?string
     {
-        $this->inputMessageFormat = $message;
-        $this->inputReplacements = $replace = self::filterNotThrowable($parameters);
-
-        return self::interpolateMessage($message, $replace)
-            ?? self::interpolateMessage(self::removeExtraAnchors($message, $replace), $replace, $message);
-    }
-
-    /**
-     * Try to compile message with provided string and replacement array.
-     *
-     * @param string      $message The message string, which may contain anchors for vsprintf
-     * @param mixed[]     $replace Array of replacements for the string
-     * @param string|null $default default return value if interpolation does not complete successfully
-     *
-     * @return string|null
-     */
-    private static function interpolateMessage(string $message, array $replace, string $default = null): ?string
-    {
-        $result = CallSilencerFactory::create(function () use ($message, $replace) {
-            return vsprintf($message, $replace);
-        }, function ($return) {
-            return false !== $return && null !== $return && true !== empty($return);
-        })->invoke();
-
-        return $result->isValid() ? $result->getReturn() : $default;
+        return (new StringInterpolator($this->inputMessageFormat = $message))(
+            ...$this->inputReplacements = self::filterNotThrowable($parameters)
+        );
     }
 
     /**
@@ -151,55 +103,5 @@ trait ExceptionInterpolateTrait
         return array_values(array_filter($parameters, function ($p) {
             return $p instanceof \Throwable;
         }));
-    }
-
-    /**
-     * Replaces the message's replacement anchors (used by {@see compileMessage()} (beginning with the nth found,
-     * as defined by the startAt parameter) with a type representation of the expected value.
-     *
-     * @param string $message
-     * @param array  $parameters
-     *
-     * @return string
-     */
-    private static function removeExtraAnchors(string $message, array $parameters): string
-    {
-        $count = 0;
-        $start = count($parameters);
-
-        return preg_replace_callback(self::buildAnchorRegex(), function ($match) use ($start, &$count) {
-            return ++$count > $start ? self::describeAnchor($match['type']) : $match[0];
-        }, $message);
-    }
-
-    /**
-     * Expand anchor (such as %s or %d) used in message to its full type name (such as string or integer).
-     *
-     * @param string $anchor
-     *
-     * @return string
-     */
-    private static function describeAnchor(string $anchor): string
-    {
-        foreach (static::$anchorTypes as $type => $characters) {
-            if (in_array($anchor, $characters, true)) {
-                $desc = sprintf('[undefined (%s)]', $type);
-            }
-        }
-
-        return $desc ?? '[undefined]';
-    }
-
-    /**
-     * @return string
-     */
-    private static function buildAnchorRegex(): string
-    {
-        return sprintf(
-            '{%%([0-9-]+)?(?<type>[%s])([0-9]?(?:\$[0-9]?[0-9]?[a-zA-Z]?)?)}',
-            array_reduce(static::$anchorTypes, function (string $all, array $types) {
-                return sprintf('%s%s', $all, implode('', $types));
-            }, '')
-        );
     }
 }

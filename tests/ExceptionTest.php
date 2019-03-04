@@ -24,6 +24,8 @@ use SR\Utilities\Query\ClassQuery;
  * @covers \SR\Exception\ExceptionInterface
  * @covers \SR\Exception\ExceptionInterpolateTrait
  * @covers \SR\Exception\ExceptionTrait
+ * @covers \SR\Exception\Utility\Interpolator\StringInterpolator
+ * @covers \SR\Exception\Utility\Dumper\Transformer\StringTransformer
  */
 class ExceptionTest extends TestCase
 {
@@ -192,22 +194,67 @@ class ExceptionTest extends TestCase
         $this->assertRegExp('{Exception$}', $e->getType(true));
     }
 
-    public function testCompileMessage(): void
+    /**
+     * @return array[]
+     */
+    public static function provideInterpolationData(): array
     {
-        $e = $this->getExceptionUsingNewKeyword('A %s with number: "%d"', ['string', 10]);
-        $this->assertSame('A string with number: "10"', $e->getMessage());
+        return [
+            [
+                'A %s with number: "%d"',
+                ['string', 10],
+                'A string with number: "10"',
+            ],
+            [
+                'Second string with number: "%d"',
+                [100],
+                'Second string with number: "100"',
+            ],
+            [
+                'Second string with number "%04d" and undefined string "%s"',
+                [100],
+                'Second string with number "0100" and undefined string "[%s (expected a "string" to be presented as a "string")]"',
+            ],
+            [
+                'Second string with undefined number "%04d" and undefined string "%s"',
+                [],
+                'Second string with undefined number "[%d (expected an "integer" to be presented as a "decimal number" (signed))]" and undefined string "[%s (expected a "string" to be presented as a "string")]"',
+            ],
+            [
+                'Second string with number "%d" and string "%s"',
+                [1, 'bar', 'foo-bar'],
+                'Second string with number "1" and string "bar"',
+            ],
+            [
+                'Argument swapping with non-provided arguments: %2$s %1$d %2$s %1$d %2$s %1$d %3$\'.09d',
+                [100],
+                'Argument swapping with non-provided arguments: [%s (expected a "string" to be presented as a "string")] 100 [%s (expected a "string" to be presented as a "string")] 100 [%s (expected a "string" to be presented as a "string")] 100 [%d (expected an "integer" to be presented as a "decimal number" (signed))]',
+            ],
 
-        $e = $this->getExceptionUsingNewKeyword('Second string with number: "%d"', [100]);
-        $this->assertSame('Second string with number: "100"', $e->getMessage());
+            [
+                'Random specification types: "%e", "%\'.9d", "%\'.09d", "%3$\'.09d", "%\'#10s", "%4$s", "%2$04d", "%+d", "%-10s", "%10.10s", "%01.2f", "%\':4d", "%-\':4d", "%-04d", "%11$-\'14d", "%11$-\'04d", "%8$.15F", "%b", "%\'.7.4s"',
+                ['1.2E+2', 900, 1234, 'string', -9, 'abc', '123', 1.234, 22, -22, 833, 9999, 'xyz'],
+                'Random specification types: "1.200000e+2", "......900", "000001234", "000001234", "####string", "string", "0900", "-9", "abc       ", "       123", "1.23", "::22", "-22:", "833 ", "8331", "833 ", "1.234000000000000", "10011100001111", "....xyz"',
+            ],
 
-        $e = $this->getExceptionUsingNewKeyword('Second string with number "%04d" and undefined string "%s"', [100]);
-        $this->assertSame('Second string with number "0100" and undefined string "[undefined (string)]"', $e->getMessage());
+            [
+                'Random specification types (with missing arguments): "%e", "%\'.9d", "%\'.09d", "%3$\'.09d", "%\'#10s", "%4$s", "%2$04d", "%+d", "%-10s", "%10.10s", "%01.2f", "%\':4d", "%-\':4d", "%-04d", "%11$-\'14d", "%11$-\'04d", "%8$.15F", "%b", "%\'.7.4s"',
+                ['1.2E+2', 900, 1234, 'string', -9, 'abc', '123', 1.234, 22, -22],
+                'Random specification types (with missing arguments): "1.200000e+2", "......900", "000001234", "000001234", "####string", "string", "0900", "-9", "abc       ", "       123", "1.23", "::22", "-22:", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "1.234000000000000", "[%b (expected an "integer" to be presented as a "binary number")]", "[%s (expected a "string" to be presented as a "string")]"',
+            ],
+        ];
+    }
 
-        $e = $this->getExceptionUsingNewKeyword('Second string with undefined number "%04d" and undefined string "%s"');
-        $this->assertSame('Second string with undefined number "[undefined (integer)]" and undefined string "[undefined (string)]"', $e->getMessage());
-
-        $e = $this->getExceptionUsingNewKeyword('Second string with number "%d" and string "%s"', [1, 'bar', 'foo-bar']);
-        $this->assertSame('Second string with number "1" and string "bar"', $e->getMessage());
+    /**
+     * @dataProvider provideInterpolationData
+     *
+     * @param string $format
+     * @param array  $replacements
+     * @param string $expected
+     */
+    public function testCompileMessage(string $format, array $replacements, string $expected): void
+    {
+        $this->assertSame($expected, $this->getExceptionUsingNewKeyword($format, $replacements)->getMessage());
     }
 
     public function testCreate(): void

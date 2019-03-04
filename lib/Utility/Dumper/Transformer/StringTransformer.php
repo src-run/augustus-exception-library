@@ -54,12 +54,12 @@ final class StringTransformer
 
     /**
      * @param array       $array
-     * @param string|null $format
      * @param string|null $joinBy
+     * @param string|null $format
      *
      * @return string
      */
-    public static function stringifyArray(array $array, string $format = null, string $joinBy = null): string
+    public static function stringifyArray(array $array, string $joinBy = null, string $format = null): string
     {
         return implode($joinBy ?? ', ', array_map(function ($element) use ($format): string {
             return sprintf($format ?? '"%s"', self::stringifyValue($element));
@@ -71,7 +71,7 @@ final class StringTransformer
      */
     private static function getStringTransformer(): BaseStringTransformer
     {
-        return  self::$transformer
+        return self::$transformer
             ?? self::$transformer = new BaseStringTransformer();
     }
 }

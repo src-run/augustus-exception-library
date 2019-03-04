@@ -107,9 +107,7 @@ trait ExceptionTrait
      */
     final public function getType(bool $qualified = false): string
     {
-        return $qualified
-            ? ClassQuery::getNameQualified(static::class)
-            : ClassQuery::getNameShort(static::class);
+        return ClassQuery::getName(static::class, $qualified);
     }
 
     /**
