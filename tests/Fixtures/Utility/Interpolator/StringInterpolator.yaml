@@ -1,0 +1,291 @@
+
+interpolation_basic:
+
+  desc: >-
+    Basic test of all available conversion specification types.
+
+  data:
+
+    -
+      provided_format: >-
+        Test interpolation %s with an integer replacement: "%d".
+      provided_values:
+        - string
+        - 10
+      provided_string: >-
+        Test interpolation string with an integer replacement: "10".
+
+    - provided_format: >-
+        Test interpolation string with a single, complex replacement: "%.03f"
+      provided_values:
+        - 49.389921
+      provided_string: >-
+        Test interpolation string with a single, complex replacement: "49.390"
+
+    -
+      provided_format: >-
+        Test interpolation string with all replacement types: "%b", "%c", "%d",
+        "%e", "%E", "%f", "%F", "%g", "%G", "%o", "%s", "%u", "%u", "%x", "%X".
+      provided_values:
+        - 43951789
+        - 65
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - 43951789
+        - -43951789
+        - 43951789
+        - 43951789
+      provided_string: >-
+        Test interpolation string with all replacement types:
+        "10100111101010011010101101", "A", "43951789", "4.395179e+7",
+        "4.395179E+7", "43951789.000000", "43951789.000000", "4.39518e+7",
+        "4.39518E+7", "247523255", "43951789", "43951789",
+        "18446744073665599827", "29ea6ad", "29EA6AD".
+
+interpolation_swaps_args:
+
+  desc: >-
+    Advanced test of all available conversion specification types and
+    argument swapping.
+
+  data:
+
+    - provided_format: >-
+        Test interpolation %2$s with swapped replacement %1$s.
+      provided_values:
+        - values
+        - string
+      provided_string: >-
+        Test interpolation string with swapped replacement values.
+
+    -
+      provided_format: >-
+        Test interpolation string with all replacement types (using argument
+        swapping): "%2$b", "%1$c", "%2$d", "%2$e", "%2$E", "%2$f", "%2$F",
+        "%2$g", "%2$G", "%2$o", "%2$s", "%2$u", "%3$u", "%2$x", "%2$X".
+      provided_values:
+        - 65
+        - 43951789
+        - -43951789
+      provided_string: >-
+        Test interpolation string with all replacement types (using argument
+        swapping): "10100111101010011010101101", "A", "43951789", "4.395179e+7",
+        "4.395179E+7", "43951789.000000", "43951789.000000", "4.39518e+7",
+        "4.39518E+7", "247523255", "43951789", "43951789",
+        "18446744073665599827", "29ea6ad", "29EA6AD".
+
+interpolation_extra_args:
+
+  desc: >-
+    Advanced test of argument swapping and extra replacement arguments (the
+    latter of which are expected to be dropped from the compiled output).
+
+  data:
+
+    -
+      provided_format: >-
+        Test interpolation %2$s with swapped and extra replacement %1$s.
+      provided_values:
+        - values
+        - string
+        - extra-foo
+        - extra-bar
+        - 100
+        - 101
+        - 102
+        - 103
+        - 104
+        - 105
+      provided_string: >-
+        Test interpolation string with swapped and extra replacement values.
+
+interpolation_empty_args:
+
+  desc: >-
+    Advanced test of all available conversion specification types, argument
+    swapping, and missing replacement arguments (the latter of which are
+    expected to be replaced with a descriptive placeholder).
+
+  data:
+
+    - provided_format: >-
+        Test interpolation string with one undefined replacement: "%s".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with one undefined replacement:
+        "{{ %s: string }}".
+
+    -
+      provided_format: >-
+        Test interpolation string with two undefined replacements: "%s", "%d".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with two undefined replacements:
+        "{{ %s: string }}", "{{ %d: integer => decimal number (signed) }}".
+
+    -
+      provided_format: >-
+        Test interpolation string with two complex, undefined replacements:
+        "%3$'.09d", "%'#10s".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with two complex, undefined replacements:
+        "{{ %d: integer => decimal number (signed) }}", "{{ %s: string }}".
+
+    -
+      provided_format: >-
+        Test interpolation string with three complex, swapped, undefined
+        replacements: "%3$'.09d", "%1$'#10s", "%2$.15F".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with three complex, swapped, undefined
+        replacements: "{{ %d: integer => decimal number (signed) }}",
+        "{{ %s: string }}",
+        "{{ %F: float => floating-point number (non-locale aware) }}".
+
+    -
+      provided_format: >-
+        Test interpolation string with one defined and one undefined
+        replacement: "%d", "%s".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with one defined and one undefined
+        replacement: "{{ %d: integer => decimal number (signed) }}",
+        "{{ %s: string }}".
+
+    -
+      provided_format: >-
+        Test interpolation string with one complex, swapped replacement and
+        two complex, swapped, undefined replacements: "%3$'.09d", "%1$'#10s",
+        "%2$.15F".
+      provided_values:
+        - foo
+      provided_string: >-
+        Test interpolation string with one complex, swapped replacement and two
+        complex, swapped, undefined replacements:
+        "{{ %d: integer => decimal number (signed) }}", "#######foo",
+        "{{ %F: float => floating-point number (non-locale aware) }}".
+
+interpolation_complex_args:
+
+  desc: >-
+    Advanced test of all available conversion specification types, argument
+    swapping, and missing or extra replacement arguments (the latter of which
+    are expected to be replaced with a descriptive placeholder or dropped from
+    the compiled output, respectively).
+
+  data:
+
+    -
+      provided_format: >-
+        Argument swapping with non-provided arguments: %2$s %1$d %2$s %1$d %2$s %1$d %3$'.09d
+      provided_values:
+        - 100
+      provided_string: >-
+        Argument swapping with non-provided arguments: {{ %s: string }} 100 {{ %s: string }} 100 {{ %s: string }} 100
+        {{ %d: integer => decimal number (signed) }}
+
+    -
+      provided_format: >-
+        Random specification types: "%e", "%'.9d", "%'.09d", "%3$'.09d", "%'#10s", "%4$s", "%2$04d", "%+d", "%-10s",
+        "%10.10s", "%01.2f", "%':4d", "%-':4d", "%-04d", "%11$-'14d", "%11$-'04d", "%8$.15F", "%b", "%'.7.4s"
+      provided_values:
+        - 120
+        - 900
+        - 1234
+        - string
+        - -9
+        - abc
+        - 123
+        - 1.234
+        - 22
+        - -22
+        - 833
+        - 9999
+        - xyz
+      provided_string: >-
+        Random specification types: "1.200000e+2", "......900", "000001234", "000001234", "####string", "string", "0900",
+        "-9", "abc       ", "       123", "1.23", "::22", "-22:", "833 ", "8331", "833 ", "1.234000000000000",
+        "10011100001111", "....xyz"
+
+    -
+      provided_format: >-
+        Random specification types (with missing arguments): "%e", "%'.9d", "%'.09d", "%3$'.09d", "%'#10s", "%4$s",
+        "%2$04d", "%+d", "%-10s", "%10.10s", "%01.2f", "%':4d", "%-':4d", "%-04d", "%11$-'14d", "%11$-'04d", "%8$.15F",
+        "%b", "%'.7.4s"
+      provided_values:
+        - 120
+        - 900
+        - 1234
+        - string
+        - -9
+        - abc
+        - 123
+        - 1.234
+        - 22
+        - -22
+      provided_string: >-
+        Random specification types (with missing arguments): "1.200000e+2", "......900", "000001234", "000001234",
+        "####string", "string", "0900", "-9", "abc       ", "       123", "1.23", "::22", "-22:",
+        "{{ %d: integer => decimal number (signed) }}", "{{ %d: integer => decimal number (signed) }}",
+        "{{ %d: integer => decimal number (signed) }}", "1.234000000000000", "{{ %b: integer => binary number }}",
+        "{{ %s: string }}"
+
+    -
+      provided_format: >-
+        All missing conversion specification type descriptions (with missing argument swapped conversion specifications
+        for each): %b, %c, %d, %e, %E, %f, %F, %g, %G, %o, %s, %u, %x, %X, %1$b, %2$c, %3$d, %4$e, %5$E, %6$f, %7$F, %8$g,
+        %9$G, %10$o, %11$s, %12$u, %13$x, %14$X
+      provided_values: []
+      provided_string: >-
+        All missing conversion specification type descriptions (with missing argument swapped conversion specifications
+        for each): {{ %b: integer => binary number }}, {{ %c: integer => ascii character }},
+        {{ %d: integer => decimal number (signed) }}, {{ %e: scientific notation (lowercase) }},
+        {{ %E: scientific notation (uppercase) }}, {{ %f: float => floating-point number (locale aware) }},
+        {{ %F: float => floating-point number (non-locale aware) }},
+        {{ %g: float or scientific notation (whichever is shortest) }},
+        {{ %G: float or scientific notation (whichever is shortest) }}, {{ %o: integer => octal number }},
+        {{ %s: string }}, {{ %u: integer => decimal number (unsigned) }},
+        {{ %x: integer => hexadecimal number (lowercase) }}, {{ %X: integer => hexadecimal number (uppercase) }},
+        {{ %b: integer => binary number }}, {{ %c: integer => ascii character }},
+        {{ %d: integer => decimal number (signed) }}, {{ %e: scientific notation (lowercase) }},
+        {{ %E: scientific notation (uppercase) }}, {{ %f: float => floating-point number (locale aware) }},
+        {{ %F: float => floating-point number (non-locale aware) }},
+        {{ %g: float or scientific notation (whichever is shortest) }},
+        {{ %G: float or scientific notation (whichever is shortest) }}, {{ %o: integer => octal number }},
+        {{ %s: string }}, {{ %u: integer => decimal number (unsigned) }},
+        {{ %x: integer => hexadecimal number (lowercase) }}, {{ %X: integer => hexadecimal number (uppercase) }}
+
+interpolation_invalid_args:
+
+  desc: >-
+    Advanced test of invalid conversion specification types, which should be
+    ignored entirely.
+
+  data:
+
+    -
+      provided_format: >-
+        Test interpolation string with one replacement and one invalid
+        conversion specification type: "%s", "%l".
+      provided_values:
+        - foo
+      provided_string: >-
+        Test interpolation string with one replacement and one invalid
+        conversion specification type: "foo", "%l".
+
+    -
+      provided_format: >-
+        Test interpolation string with one missing replacement and one invalid
+        conversion specification type: "%s", "%l".
+      provided_values: []
+      provided_string: >-
+        Test interpolation string with one missing replacement and one invalid
+        conversion specification type: "{{ %s: string }}", "%l".

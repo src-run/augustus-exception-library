@@ -12,6 +12,7 @@
 namespace SR\Exception\Utility\Interpolator;
 
 use SR\Silencer\CallSilencerFactory;
+use SR\Utilities\Characters\AsciiCharacters;
 
 final class StringInterpolator
 {
@@ -21,14 +22,9 @@ final class StringInterpolator
     private $format;
 
     /**
-     * @var string
-     */
-    private static $conversionSpecificationRegex;
-
-    /**
      * @var string[]
      */
-    private static $conversionSpecificationRules = [
+    private static $specificationRegexRules = [
         '([0-9]{1,}\$)?',    // An optional "argument swapping id"
         '([+-])?',           // An optional "sign signifier"
         '(\'.{0,1}|[0\s])?', // An optional "padding specifier"
@@ -37,23 +33,23 @@ final class StringInterpolator
     ];
 
     /**
-     * @var string[]
+     * @var array[]
      */
-    private static $conversionSpecificationTypes = [
-        'b' => 'expected an "integer" to be presented as a "binary number"',
-        'c' => 'expected an "integer" to be presented as a "its ASCII character representation"',
-        'd' => 'expected an "integer" to be presented as a "decimal number" (signed)',
-        'e' => 'expected "scientific notation" to be presented as "scientific notation" (lowercase)',
-        'E' => 'expected "scientific notation" to be presented as "scientific notation" (uppercase)',
-        'f' => 'expected a "float" to be presented as a "floating-point number" (locale aware)',
-        'F' => 'expected a "float" to be presented as a "floating-point number" (non-locale aware)',
-        'g' => 'expected a "float or scientific notation" to be presented as the shorter of the two',
-        'G' => 'expected a "float or scientific notation" to be presented as the shorter of the two',
-        'o' => 'expected an "integer" to be presented as an "octal number"',
-        's' => 'expected a "string" to be presented as a "string"',
-        'u' => 'expected an "integer" to be presented as an "unsigned decimal number"',
-        'x' => 'expected an "integer" to be presented as a "hexadecimal number" (lowercase)',
-        'X' => 'expected an "integer" to be presented as a "hexadecimal number" (uppercase)',
+    private static $specificationTypeData = [
+        'b' => ['expected' => 'integer', 'provided' => 'binary number', 'modifier' => null],
+        'c' => ['expected' => 'integer', 'provided' => 'ascii character', 'modifier' => null],
+        'd' => ['expected' => 'integer', 'provided' => 'decimal number', 'modifier' => 'signed'],
+        'e' => ['expected' => 'scientific notation', 'provided' => 'scientific notation', 'modifier' => 'lowercase'],
+        'E' => ['expected' => 'scientific notation', 'provided' => 'scientific notation', 'modifier' => 'uppercase'],
+        'f' => ['expected' => 'float', 'provided' => 'floating-point number', 'modifier' => 'locale aware'],
+        'F' => ['expected' => 'float', 'provided' => 'floating-point number', 'modifier' => 'non-locale aware'],
+        'g' => ['expected' => ['float', 'scientific notation'], 'provided' => ['float', 'scientific notation'], 'modifier' => 'whichever is shortest'],
+        'G' => ['expected' => ['float', 'scientific notation'], 'provided' => ['float', 'scientific notation'], 'modifier' => 'whichever is shortest'],
+        'o' => ['expected' => 'integer', 'provided' => 'octal number', 'modifier' => null],
+        's' => ['expected' => 'string', 'provided' => 'string', 'modifier' => null],
+        'u' => ['expected' => 'integer', 'provided' => 'decimal number', 'modifier' => 'unsigned'],
+        'x' => ['expected' => 'integer', 'provided' => 'hexadecimal number', 'modifier' => 'lowercase'],
+        'X' => ['expected' => 'integer', 'provided' => 'hexadecimal number', 'modifier' => 'uppercase'],
     ];
 
     /**
@@ -61,7 +57,7 @@ final class StringInterpolator
      */
     public function __construct(string $format = null)
     {
-        $this->format = $format;
+        $this->format = self::escapeUnknownSpecificationTypes($format);
     }
 
     /**
@@ -89,6 +85,19 @@ final class StringInterpolator
     }
 
     /**
+     * @param string $format
+     * @param array  $replacements
+     *
+     * @return string|null
+     */
+    private static function interpolate(string $format, array $replacements): ?string
+    {
+        return CallSilencerFactory::create(function () use ($format, $replacements): ?string {
+            return vsprintf($format, $replacements) ?: null;
+        })->invoke()->getReturn();
+    }
+
+    /**
      * @param mixed[]     $replacements
      * @param string|null $default
      *
@@ -111,13 +120,13 @@ final class StringInterpolator
         $count = 0;
         $start = count($replacements);
 
-        $this->format = preg_replace_callback(self::getConversionSpecificationRegex(), function ($match) use ($start, &$count) {
-            if (self::isValidSwappedConversionSpecification($match[0], $start)) {
+        $this->format = preg_replace_callback(self::getValidSpecificationSyntaxRegex(), function (array $match) use ($start, &$count): string {
+            if (self::isValidSwappedSpecification($match[0], $start)) {
                 return $match[0];
             }
 
-            if (++$count > $start || self::isInvalidSwappedConversionSpecification($match[0], $start)) {
-                return self::describeTypeSpecifier($match['type']);
+            if (++$count > $start || self::isExtraSwappedSpecification($match[0], $start)) {
+                return self::buildSpecificationTypeDesc($match['type']);
             }
 
             return $match[0];
@@ -127,14 +136,17 @@ final class StringInterpolator
     }
 
     /**
-     * @param string $specification
-     * @param int    $count
+     * @param string|null $format
      *
-     * @return bool
+     * @return string
      */
-    private static function isInvalidSwappedConversionSpecification(string $specification, int $count): bool
+    private static function escapeUnknownSpecificationTypes(string $format = null): string
     {
-        return 1 === preg_match('/^%\d+\$/', $specification) && !self::isValidSwappedConversionSpecification($specification, $count);
+        return null === $format ? null : preg_replace_callback(
+            self::getUnknownSpecificationSyntaxRegex(), function (array $match) {
+                return sprintf('%%%s', $match['match']);
+            }, $format
+        );
     }
 
     /**
@@ -143,22 +155,20 @@ final class StringInterpolator
      *
      * @return bool
      */
-    private static function isValidSwappedConversionSpecification(string $specification, int $count): bool
+    private static function isExtraSwappedSpecification(string $specification, int $count): bool
+    {
+        return 1 === preg_match('/^%\d+\$/', $specification) && !self::isValidSwappedSpecification($specification, $count);
+    }
+
+    /**
+     * @param string $specification
+     * @param int    $count
+     *
+     * @return bool
+     */
+    private static function isValidSwappedSpecification(string $specification, int $count): bool
     {
         return $count > 0 && 1 === preg_match(sprintf('/^%%(%s)\$/', implode('|', range(1, $count))), $specification);
-    }
-
-    /**
-     * @param string $format
-     * @param array  $replacements
-     *
-     * @return string|null
-     */
-    private static function interpolate(string $format, array $replacements): ?string
-    {
-        return CallSilencerFactory::create(function () use ($format, $replacements): ?string {
-            return vsprintf($format, $replacements) ?: null;
-        })->invoke()->getReturn();
     }
 
     /**
@@ -168,30 +178,62 @@ final class StringInterpolator
      *
      * @return string
      */
-    private static function describeTypeSpecifier(string $type): string
+    private static function buildSpecificationTypeDesc(string $type): string
     {
-        return sprintf(
-            '[%%%%%s (%s)]', $type, self::$conversionSpecificationTypes[$type] ?? 'unknown specification type'
-        );
+        $expected = self::buildSpecificationTypeDescData($type, 'expected', '%s', '') ?: 'undefined-foo';
+        $provided = self::buildSpecificationTypeDescData($type, 'provided', '%s', '') ?: 'undefined-bar';
+        $modifier = self::buildSpecificationTypeDescData($type, 'modifier', ' (%s)', '', ', ');
+
+        return $expected === $provided
+            ? sprintf('{{ %%%%%s: %s%s }}', $type, $expected, $modifier)
+            : sprintf('{{ %%%%%s: %s => %s%s }}', $type, $expected, $provided, $modifier);
+    }
+
+    /**
+     * @param string      $type
+     * @param string      $what
+     * @param string      $format
+     * @param string|null $join
+     * @param string|null $default
+     *
+     * @return string
+     */
+    private static function buildSpecificationTypeDescData(string $type, string $what, string $format, string $default, string $join = null): string
+    {
+        return empty($data = (array) ((self::$specificationTypeData[$type] ?? [])[$what] ?? []))
+            ? $default
+            : sprintf($format, implode($join ?? ' or ', $data));
     }
 
     /**
      * @return string
      */
-    private static function getConversionSpecificationRegex(): string
-    {
-        return self::$conversionSpecificationRegex
-            ?? self::$conversionSpecificationRegex = self::buildConversionSpecificationRegex();
-    }
-
-    /**
-     * @return string
-     */
-    private static function buildConversionSpecificationRegex(): string
+    private static function getValidSpecificationSyntaxRegex(): string
     {
         return vsprintf('/%%%s(?<type>[%s]{1})/', [
-            implode('', self::$conversionSpecificationRules),
-            implode('', array_keys(self::$conversionSpecificationTypes)),
+            implode('', self::$specificationRegexRules),
+            implode('', self::getSpecificationTypes()),
         ]);
+    }
+
+    /**
+     * @return string
+     */
+    private static function getUnknownSpecificationSyntaxRegex(): string
+    {
+        return vsprintf('/(?<match>%%%s(?<type>[%s]{1}))/', [
+            implode('', self::$specificationRegexRules),
+            implode('', array_filter((new AsciiCharacters())->letters()->chars(), function (string $c): bool {
+                return !in_array($c, self::getSpecificationTypes(), true);
+            })),
+        ]);
+    }
+
+    /**
+     * @return string[]
+     */
+    private static function getSpecificationTypes(): array
+    {
+        return array_keys(self::$specificationTypeData);
     }
 }

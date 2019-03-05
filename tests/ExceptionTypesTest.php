@@ -32,6 +32,8 @@ use SR\Utilities\Query\ClassQuery;
  * @covers \SR\Exception\Runtime\RuntimeException
  * @covers \SR\Exception\Runtime\UnderflowException
  * @covers \SR\Exception\Runtime\UnexpectedValueException
+ * @covers \SR\Exception\Utility\Interpolator\StringInterpolator
+ * @covers \SR\Exception\Utility\Dumper\Transformer\StringTransformer
  */
 class ExceptionTypesTest extends TestCase
 {

@@ -15,6 +15,8 @@ use PHPUnit\Framework\TestCase;
 use SR\Exception\Exception;
 use SR\Exception\ExceptionInterface;
 use SR\Exception\Tests\Fixtures\ExceptionTypes;
+use SR\Exception\Tests\Fixtures\YamlDataFixtureLoader;
+use SR\Exception\Utility\Interpolator\StringInterpolator;
 use SR\Utilities\Query\ClassQuery;
 
 /**
@@ -195,54 +197,11 @@ class ExceptionTest extends TestCase
     }
 
     /**
-     * @return array[]
+     * @return \Generator
      */
-    public static function provideInterpolationData(): array
+    public static function provideInterpolationData(): \Generator
     {
-        return [
-            [
-                'A %s with number: "%d"',
-                ['string', 10],
-                'A string with number: "10"',
-            ],
-            [
-                'Second string with number: "%d"',
-                [100],
-                'Second string with number: "100"',
-            ],
-            [
-                'Second string with number "%04d" and undefined string "%s"',
-                [100],
-                'Second string with number "0100" and undefined string "[%s (expected a "string" to be presented as a "string")]"',
-            ],
-            [
-                'Second string with undefined number "%04d" and undefined string "%s"',
-                [],
-                'Second string with undefined number "[%d (expected an "integer" to be presented as a "decimal number" (signed))]" and undefined string "[%s (expected a "string" to be presented as a "string")]"',
-            ],
-            [
-                'Second string with number "%d" and string "%s"',
-                [1, 'bar', 'foo-bar'],
-                'Second string with number "1" and string "bar"',
-            ],
-            [
-                'Argument swapping with non-provided arguments: %2$s %1$d %2$s %1$d %2$s %1$d %3$\'.09d',
-                [100],
-                'Argument swapping with non-provided arguments: [%s (expected a "string" to be presented as a "string")] 100 [%s (expected a "string" to be presented as a "string")] 100 [%s (expected a "string" to be presented as a "string")] 100 [%d (expected an "integer" to be presented as a "decimal number" (signed))]',
-            ],
-
-            [
-                'Random specification types: "%e", "%\'.9d", "%\'.09d", "%3$\'.09d", "%\'#10s", "%4$s", "%2$04d", "%+d", "%-10s", "%10.10s", "%01.2f", "%\':4d", "%-\':4d", "%-04d", "%11$-\'14d", "%11$-\'04d", "%8$.15F", "%b", "%\'.7.4s"',
-                ['1.2E+2', 900, 1234, 'string', -9, 'abc', '123', 1.234, 22, -22, 833, 9999, 'xyz'],
-                'Random specification types: "1.200000e+2", "......900", "000001234", "000001234", "####string", "string", "0900", "-9", "abc       ", "       123", "1.23", "::22", "-22:", "833 ", "8331", "833 ", "1.234000000000000", "10011100001111", "....xyz"',
-            ],
-
-            [
-                'Random specification types (with missing arguments): "%e", "%\'.9d", "%\'.09d", "%3$\'.09d", "%\'#10s", "%4$s", "%2$04d", "%+d", "%-10s", "%10.10s", "%01.2f", "%\':4d", "%-\':4d", "%-04d", "%11$-\'14d", "%11$-\'04d", "%8$.15F", "%b", "%\'.7.4s"',
-                ['1.2E+2', 900, 1234, 'string', -9, 'abc', '123', 1.234, 22, -22],
-                'Random specification types (with missing arguments): "1.200000e+2", "......900", "000001234", "000001234", "####string", "string", "0900", "-9", "abc       ", "       123", "1.23", "::22", "-22:", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "[%d (expected an "integer" to be presented as a "decimal number" (signed))]", "1.234000000000000", "[%b (expected an "integer" to be presented as a "binary number")]", "[%s (expected a "string" to be presented as a "string")]"',
-            ],
-        ];
+        yield from (new YamlDataFixtureLoader(StringInterpolator::class))->load();
     }
 
     /**
