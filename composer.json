@@ -27,7 +27,8 @@
     "codacy/coverage": "^1.4",
     "friendsofphp/php-cs-fixer": "^2.13",
     "php-coveralls/php-coveralls": "^2.1",
-    "symfony/phpunit-bridge": "^4.1"
+    "symfony/phpunit-bridge": "^4.1",
+    "symfony/yaml": "^4.2"
   },
   "autoload": {
     "psr-4": {
