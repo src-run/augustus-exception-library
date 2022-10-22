@@ -15,31 +15,19 @@ use SR\Dumper\Transformer\StringTransformer as BaseStringTransformer;
 
 final class StringTransformer
 {
-    /**
-     * @var BaseStringTransformer
-     */
-    private static $transformer;
+    private static BaseStringTransformer $transformer;
 
-    /**
-     * @param mixed $value
-     *
-     * @return string
-     */
-    public function __invoke($value): string
+    public function __invoke(mixed $value): string
     {
         return self::stringifyValue($value);
     }
 
     /**
      * Returns a scalar representation of the passed value.
-     *
-     * @param mixed $value
-     *
-     * @return string
      */
-    public static function stringifyValue($value): string
+    public static function stringifyValue(mixed $value): string
     {
-        if (is_scalar($value) || method_exists($value, '__toString')) {
+        if (is_scalar($value) || is_callable([$value, '__toString'])) {
             return (string) $value;
         }
 
@@ -48,17 +36,10 @@ final class StringTransformer
         }
 
         return trim(preg_replace('{\s+}', ' ', preg_replace(
-                '{\n[\s\t]*}', ' ', self::getStringTransformer()($value))
+            '{\n[\s\t]*}', ' ', self::getStringTransformer()($value))
         ), ' ');
     }
 
-    /**
-     * @param array       $array
-     * @param string|null $joinBy
-     * @param string|null $format
-     *
-     * @return string
-     */
     public static function stringifyArray(array $array, string $joinBy = null, string $format = null): string
     {
         return implode($joinBy ?? ', ', array_map(function ($element) use ($format): string {
@@ -66,9 +47,6 @@ final class StringTransformer
         }, $array));
     }
 
-    /**
-     * @return BaseStringTransformer
-     */
     private static function getStringTransformer(): BaseStringTransformer
     {
         return self::$transformer

@@ -15,8 +15,6 @@ interface ExceptionAttributesInterface extends \Throwable
 {
     /**
      * Returns the attributes array.
-     *
-     * @return array
      */
     public function getAttributes(): array;
 
@@ -25,17 +23,13 @@ interface ExceptionAttributesInterface extends \Throwable
      *
      * @param string $index Index string
      * @param mixed  $value Value to set
-     *
-     * @return ExceptionInterface
      */
-    public function setAttribute(string $index, $value): ExceptionInterface;
+    public function setAttribute(string $index, mixed $value): ExceptionInterface;
 
     /**
      * Returns true if an attribute with the specified index exists.
      *
      * @param string $index The attribute index to search for
-     *
-     * @return bool
      */
     public function hasAttribute(string $index): bool;
 
@@ -46,5 +40,5 @@ interface ExceptionAttributesInterface extends \Throwable
      *
      * @return mixed|null
      */
-    public function getAttribute(string $index);
+    public function getAttribute(string $index): mixed;
 }

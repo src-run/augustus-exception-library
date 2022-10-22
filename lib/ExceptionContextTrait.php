@@ -16,17 +16,12 @@ use SR\Utilities\Context\FileContextInterface;
 
 trait ExceptionContextTrait
 {
-    /**
-     * @var FileContextInterface
-     */
-    private $context;
+    private ?FileContextInterface $context = null;
 
     /**
      * Returns a file context class instance.
-     *
-     * @return FileContextInterface|ExceptionTrait
      */
-    final public function getContext(): FileContextInterface
+    final public function getContext(): FileContextInterface|self
     {
         if (!$this->context) {
             $this->context = new FileContext($this->getFile(), $this->getLine());
@@ -37,8 +32,6 @@ trait ExceptionContextTrait
 
     /**
      * Returns the reflection class of the thrown exception's context.
-     *
-     * @return \ReflectionClass|null
      */
     final public function getContextClass(): ?\ReflectionClass
     {
@@ -51,10 +44,6 @@ trait ExceptionContextTrait
 
     /**
      * Returns the class name of the thrown exception's context.
-     *
-     * @param bool $qualified
-     *
-     * @return string|null
      */
     final public function getContextClassName(bool $qualified = true): ?string
     {
@@ -67,8 +56,6 @@ trait ExceptionContextTrait
 
     /**
      * Returns the reflection method of the thrown exception's context.
-     *
-     * @return \ReflectionMethod|null
      */
     final public function getContextMethod(): ?\ReflectionMethod
     {
@@ -81,10 +68,6 @@ trait ExceptionContextTrait
 
     /**
      * Returns the method name of the thrown exception's context.
-     *
-     * @param bool $qualified
-     *
-     * @return string|null
      */
     final public function getContextMethodName(bool $qualified = false): ?string
     {
@@ -97,8 +80,6 @@ trait ExceptionContextTrait
 
     /**
      * Returns file lines for the line context.
-     *
-     * @param int $lines
      *
      * @return array|string[]
      */

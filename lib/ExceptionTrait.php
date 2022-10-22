@@ -24,18 +24,15 @@ trait ExceptionTrait
      * Constructor accepts message string and any number of parameters, which will be used as string replacements for
      * message string (unless an instance of \Throwable is found, in which case it is passed to parent as previous).
      *
-     * @param string|null $message
-     * @param mixed       ...$parameters
+     * @param mixed ...$parameters
      */
     public function __construct(string $message = null, ...$parameters)
     {
-        parent::__construct($this->resolveMessage((string) $message, $parameters), null, $this->resolvePreviousException($parameters));
+        parent::__construct($this->resolveMessage((string) $message, $parameters), 0, $this->resolvePreviousException($parameters));
     }
 
     /**
      * Return string representation of exception.
-     *
-     * @return string
      */
     final public function __toString(): string
     {
@@ -56,8 +53,6 @@ trait ExceptionTrait
 
     /**
      * Return array representation of exception.
-     *
-     * @return mixed[]
      */
     final public function __toArray(): array
     {
@@ -78,13 +73,7 @@ trait ExceptionTrait
         ];
     }
 
-    /**
-     * @param string|null $message
-     * @param mixed       ...$parameters
-     *
-     * @return ExceptionInterface|ExceptionTrait
-     */
-    final public static function create(string $message = null, ...$parameters): ExceptionInterface
+    final public static function create(string $message = null, mixed ...$parameters): ExceptionInterface|self
     {
         $instance = new static($message, ...$parameters);
 
@@ -100,21 +89,12 @@ trait ExceptionTrait
 
     /**
      * Returns the exception type (class name) as either a fully-qualified class name or as just the class base name.
-     *
-     * @param bool $qualified
-     *
-     * @return string
      */
     final public function getType(bool $qualified = false): string
     {
         return ClassQuery::getName(static::class, $qualified);
     }
 
-    /**
-     * @param        $instance
-     * @param string $instType
-     * @param string $funcName
-     */
     private static function assignInstancePropertiesFromTrace($instance, string $instType, string $funcName): void
     {
         ClassQuery::setNonAccessiblePropertyValue(
@@ -126,9 +106,6 @@ trait ExceptionTrait
         );
     }
 
-    /**
-     * @return string
-     */
     private function attributesToString(): string
     {
         $attributes = $this->getAttributes();

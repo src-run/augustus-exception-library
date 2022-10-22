@@ -17,49 +17,31 @@ interface ExceptionContextInterface extends \Throwable
 {
     /**
      * Returns a file context class instance.
-     *
-     * @return FileContextInterface
      */
-    public function getContext(): FileContextInterface;
+    public function getContext(): FileContextInterface|self;
 
     /**
      * Returns the reflection class of the thrown exception's context.
-     *
-     * @return \ReflectionClass|null
      */
     public function getContextClass(): ?\ReflectionClass;
 
     /**
      * Returns the class name of the thrown exception's context.
-     *
-     * @param bool $qualified
-     *
-     * @return string|null
      */
     public function getContextClassName(bool $qualified = true): ?string;
 
     /**
      * Returns the reflection method of the thrown exception's context.
-     *
-     * @return \ReflectionMethod|null
      */
     public function getContextMethod(): ?\ReflectionMethod;
 
     /**
      * Returns the method name of the thrown exception's context.
-     *
-     * @param bool $qualified
-     *
-     * @return string|null
      */
     public function getContextMethodName(bool $qualified = false): ?string;
 
     /**
      * Returns file lines for the line context.
-     *
-     * @param int $lines
-     *
-     * @return array|\string[]
      */
     public function getContextFileSnippet(int $lines = 3): array;
 }

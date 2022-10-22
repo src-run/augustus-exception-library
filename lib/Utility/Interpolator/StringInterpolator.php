@@ -11,20 +11,16 @@
 
 namespace SR\Exception\Utility\Interpolator;
 
-use SR\Silencer\CallSilencerFactory;
 use SR\Utilities\Characters\AsciiCharacters;
 
 final class StringInterpolator
 {
-    /**
-     * @var string|null
-     */
-    private $format;
+    private ?string $format = null;
 
     /**
      * @var string[]
      */
-    private static $specificationRegexRules = [
+    private static array $specificationRegexRules = [
         '([0-9]{1,}\$)?',    // An optional "argument swapping id"
         '([+-])?',           // An optional "sign signifier"
         '(\'.{0,1}|[0\s])?', // An optional "padding specifier"
@@ -35,7 +31,7 @@ final class StringInterpolator
     /**
      * @var array[]
      */
-    private static $specificationTypeData = [
+    private static array $specificationTypeData = [
         'b' => ['expected' => 'integer', 'provided' => 'binary number', 'modifier' => null],
         'c' => ['expected' => 'integer', 'provided' => 'ascii character', 'modifier' => null],
         'd' => ['expected' => 'integer', 'provided' => 'decimal number', 'modifier' => 'signed'],
@@ -52,9 +48,6 @@ final class StringInterpolator
         'X' => ['expected' => 'integer', 'provided' => 'hexadecimal number', 'modifier' => 'uppercase'],
     ];
 
-    /**
-     * @param string|null $format
-     */
     public function __construct(string $format = null)
     {
         $this->format = self::escapeUnknownSpecificationTypes($format);
@@ -62,8 +55,6 @@ final class StringInterpolator
 
     /**
      * @param mixed ...$replacements
-     *
-     * @return string|null
      */
     public function __invoke(...$replacements): ?string
     {
@@ -72,10 +63,7 @@ final class StringInterpolator
     }
 
     /**
-     * @param mixed[]     $replacements
-     * @param string|null $default
-     *
-     * @return string|null
+     * @param mixed[] $replacements
      */
     private function tryInterpolationWithAllPassedTypes(array $replacements, string $default = null): ?string
     {
@@ -84,22 +72,17 @@ final class StringInterpolator
             : null;
     }
 
-    /**
-     * @param string $format
-     * @param array  $replacements
-     *
-     * @return string|null
-     */
     private static function interpolate(string $format, array $replacements): ?string
     {
-        return CallSilencerFactory::create(function () use ($format, $replacements): ?string {
-            return vsprintf($format, $replacements) ?: null;
-        })->invoke()->getReturn();
+        try {
+            return vsprintf($format, $replacements);
+        } catch (\Error) {
+            return null;
+        }
     }
 
     /**
-     * @param mixed[]     $replacements
-     * @param string|null $default
+     * @param mixed[] $replacements
      *
      * @return string
      */
@@ -107,14 +90,10 @@ final class StringInterpolator
     {
         return $this
             ->removeExtraConversionSpecifications($replacements)
-            ->tryInterpolationWithAllPassedTypes($replacements, $default);
+            ->tryInterpolationWithAllPassedTypes($replacements, $default)
+        ;
     }
 
-    /**
-     * @param array $replacements
-     *
-     * @return self
-     */
     private function removeExtraConversionSpecifications(array $replacements): self
     {
         $count = 0;
@@ -135,12 +114,7 @@ final class StringInterpolator
         return $this;
     }
 
-    /**
-     * @param string|null $format
-     *
-     * @return string
-     */
-    private static function escapeUnknownSpecificationTypes(string $format = null): string
+    private static function escapeUnknownSpecificationTypes(string $format = null): ?string
     {
         return null === $format ? null : preg_replace_callback(
             self::getUnknownSpecificationSyntaxRegex(), function (array $match) {
@@ -149,23 +123,11 @@ final class StringInterpolator
         );
     }
 
-    /**
-     * @param string $specification
-     * @param int    $count
-     *
-     * @return bool
-     */
     private static function isExtraSwappedSpecification(string $specification, int $count): bool
     {
         return 1 === preg_match('/^%\d+\$/', $specification) && !self::isValidSwappedSpecification($specification, $count);
     }
 
-    /**
-     * @param string $specification
-     * @param int    $count
-     *
-     * @return bool
-     */
     private static function isValidSwappedSpecification(string $specification, int $count): bool
     {
         return $count > 0 && 1 === preg_match(sprintf('/^%%(%s)\$/', implode('|', range(1, $count))), $specification);
@@ -173,10 +135,6 @@ final class StringInterpolator
 
     /**
      * Expand anchor (such as %s or %d) used in message to its full type name (such as string or integer).
-     *
-     * @param string $type
-     *
-     * @return string
      */
     private static function buildSpecificationTypeDesc(string $type): string
     {
@@ -189,15 +147,6 @@ final class StringInterpolator
             : sprintf('{{ %%%%%s: %s => %s%s }}', $type, $expected, $provided, $modifier);
     }
 
-    /**
-     * @param string      $type
-     * @param string      $what
-     * @param string      $format
-     * @param string|null $join
-     * @param string|null $default
-     *
-     * @return string
-     */
     private static function buildSpecificationTypeDescData(string $type, string $what, string $format, string $default, string $join = null): string
     {
         return empty($data = (array) ((self::$specificationTypeData[$type] ?? [])[$what] ?? []))
@@ -205,9 +154,6 @@ final class StringInterpolator
             : sprintf($format, implode($join ?? ' or ', $data));
     }
 
-    /**
-     * @return string
-     */
     private static function getValidSpecificationSyntaxRegex(): string
     {
         return vsprintf('/%%%s(?<type>[%s]{1})/', [
@@ -216,9 +162,6 @@ final class StringInterpolator
         ]);
     }
 
-    /**
-     * @return string
-     */
     private static function getUnknownSpecificationSyntaxRegex(): string
     {
         return vsprintf('/(?<match>%%%s(?<type>[%s]{1}))/', [

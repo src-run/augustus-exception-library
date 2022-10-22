@@ -16,27 +16,15 @@ use SR\Exception\Utility\Interpolator\StringInterpolator;
 
 trait ExceptionInterpolateTrait
 {
-    /**
-     * @var string
-     */
-    private $inputMessageFormat;
+    private string $inputMessageFormat;
 
-    /**
-     * @var mixed[]
-     */
-    private $inputReplacements = [];
+    private array $inputReplacements = [];
 
-    /**
-     * @return string|null
-     */
     final public function getInputMessageFormat(): ?string
     {
         return $this->inputMessageFormat;
     }
 
-    /**
-     * @return array
-     */
     final public function getInputReplacements(): array
     {
         return $this->inputReplacements;
@@ -45,10 +33,6 @@ trait ExceptionInterpolateTrait
     /**
      * Handle "compilation" of the final previous exception by filtering the passed parameters for instances of \Throwable
      * and returning the first instance found.
-     *
-     * @param mixed[] $parameters
-     *
-     * @return \Throwable|null
      */
     final protected function resolvePreviousException(array $parameters = []): ?\Throwable
     {
@@ -61,11 +45,6 @@ trait ExceptionInterpolateTrait
      * string. Failure of the {@see vsprintf} call (which happens when, for example, the message string contains a
      * different number of anchor than the number of replacements provided) will not fail or return null, but
      * instead return the message string in its un-compiled form.
-     *
-     * @param string|null $message
-     * @param mixed[]     $parameters
-     *
-     * @return string|null
      */
     final protected function resolveMessage(string $message = null, array $parameters = []): ?string
     {
@@ -76,10 +55,6 @@ trait ExceptionInterpolateTrait
 
     /**
      * Filters an array of parameters (the values passed to any of this object's variadic methods) of all throwables.
-     *
-     * @param mixed[] $parameters
-     *
-     * @return mixed[]
      */
     private static function filterNotThrowable(array $parameters): array
     {
@@ -93,8 +68,6 @@ trait ExceptionInterpolateTrait
     /**
      * Filters an array of parameters (the values passed to any of this object's variadic methods) of non-throwables
      * and returns the first found or null if none are found.
-     *
-     * @param mixed[] $parameters
      *
      * @return \Throwable[]
      */

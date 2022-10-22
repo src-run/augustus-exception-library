@@ -64,9 +64,6 @@ class ExceptionTypes
     ];
 
     /**
-     * @param \Closure|null $mapper
-     * @param \Closure|null $filter
-     *
      * @return string[]
      */
     public static function getExceptionClasses(\Closure $mapper = null, \Closure $filter = null): array
@@ -78,12 +75,6 @@ class ExceptionTypes
         }));
     }
 
-    /**
-     * @param \Closure|null $mapper
-     * @param \Closure|null $filter
-     *
-     * @return string
-     */
     public static function getRandomExceptionClass(\Closure $mapper = null, \Closure $filter = null): string
     {
         try {
@@ -107,9 +98,6 @@ class ExceptionTypes
 
     /**
      * @param string|object $thrownContext
-     * @param bool          $staticConstructor
-     *
-     * @return ExceptionInterface
      */
     public static function createRandomException($thrownContext, bool $staticConstructor = false): ExceptionInterface
     {
@@ -123,9 +111,6 @@ class ExceptionTypes
 
     /**
      * @param string|object $thrownContext
-     * @param bool          $staticConstructor
-     *
-     * @return \Closure
      */
     public static function getRandExceptionCreationClosure($thrownContext, bool $staticConstructor = false): \Closure
     {
@@ -142,8 +127,6 @@ class ExceptionTypes
     /**
      * @param string|object      $thrownContext
      * @param string|object|null $exceptionContext
-     *
-     * @return array
      */
     public static function getDefaultExceptionArguments($thrownContext, $exceptionContext = null): array
     {
@@ -160,8 +143,6 @@ class ExceptionTypes
 
     /**
      * @param string|object|null $context
-     *
-     * @return string
      */
     private static function locateFileContext($context = null): string
     {
@@ -170,9 +151,6 @@ class ExceptionTypes
 
     /**
      * @param string|object|null $context
-     * @param bool               $useFunc
-     *
-     * @return string
      */
     private static function normalizeContext($context = null, bool $useFunc = false): string
     {

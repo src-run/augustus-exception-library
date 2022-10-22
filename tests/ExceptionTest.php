@@ -23,7 +23,6 @@ use SR\Utilities\Query\ClassQuery;
  * @covers \SR\Exception\Exception
  * @covers \SR\Exception\ExceptionAttributesTrait
  * @covers \SR\Exception\ExceptionContextTrait
- * @covers \SR\Exception\ExceptionInterface
  * @covers \SR\Exception\ExceptionInterpolateTrait
  * @covers \SR\Exception\ExceptionTrait
  * @covers \SR\Exception\Utility\Interpolator\StringInterpolator
@@ -51,15 +50,12 @@ class ExceptionTest extends TestCase
         $e = $this->getExceptionUsingNewKeyword();
         $this->assertSame('getExceptionUsingNewKeyword', $e->getContextMethod()->getShortName());
         $this->assertSame('getExceptionUsingNewKeyword', $e->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getExceptionUsingNewKeyword', $e->getContextMethodName(true));
+        $this->assertSame(__CLASS__ . '::getExceptionUsingNewKeyword', $e->getContextMethodName(true));
         $this->assertSame(__CLASS__, $e->getContextClass()->getName());
         $this->assertSame(__CLASS__, $e->getContextClassName());
         $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
     }
 
-    /**
-     * @return \Generator
-     */
     public static function provideFileDiffContextSize(): \Generator
     {
         $methods = [
@@ -76,11 +72,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @dataProvider provideFileDiffContextSize
-     *
-     * @param string $class
-     * @param string $method
-     * @param bool   $static
-     * @param int    $lines
      */
     public function testFileDiffContext(string $class, string $method, bool $static, int $lines): void
     {
@@ -88,7 +79,7 @@ class ExceptionTest extends TestCase
 
         $this->assertContains(count($e->getContextFileSnippet($lines)), [
             ($lines * 2) - 1,
-            ($lines * 2),
+            $lines * 2,
             ($lines * 2) + 1,
         ]);
 
@@ -139,12 +130,12 @@ class ExceptionTest extends TestCase
             'index-02' => 'value-02',
         ];
 
-        $this->assertRegExp('{Exception: A test exception \(in "[^"]+" at "[^"]+"}', $e->__toString());
+        $this->assertMatchesRegularExpression('{Exception: A test exception \(in "[^"]+" at "[^"]+"}', $e->__toString());
 
         foreach ($a as $i => $v) {
             $e->setAttribute($i, $v);
         }
-        $this->assertRegExp('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $e->__toString());
+        $this->assertMatchesRegularExpression('{Attributes: \[index-01\]=value-01, \[index-02\]=value-02}', $e->__toString());
     }
 
     public function testStringifyComplex(): void
@@ -184,21 +175,18 @@ class ExceptionTest extends TestCase
 
     public function testType(): void
     {
-        $this->assertRegExp('{^Exception$}', $this->getExceptionUsingNewKeyword()->getType());
-        $this->assertRegExp('{^SR\\\}', $this->getExceptionUsingNewKeyword()->getType(true));
+        $this->assertMatchesRegularExpression('{^Exception$}', $this->getExceptionUsingNewKeyword()->getType());
+        $this->assertMatchesRegularExpression('{^SR\\\}', $this->getExceptionUsingNewKeyword()->getType(true));
     }
 
     public function testTypeQualified(): void
     {
         $e = $this->getExceptionUsingNewKeyword();
 
-        $this->assertNotRegExp('{^Exception$}', $e->getType(true));
-        $this->assertRegExp('{Exception$}', $e->getType(true));
+        $this->assertDoesNotMatchRegularExpression('{^Exception$}', $e->getType(true));
+        $this->assertMatchesRegularExpression('{Exception$}', $e->getType(true));
     }
 
-    /**
-     * @return \Generator
-     */
     public static function provideInterpolationData(): \Generator
     {
         yield from (new YamlDataFixtureLoader(StringInterpolator::class))->load();
@@ -206,10 +194,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @dataProvider provideInterpolationData
-     *
-     * @param string $format
-     * @param array  $replacements
-     * @param string $expected
      */
     public function testCompileMessage(string $format, array $replacements, string $expected): void
     {
@@ -220,7 +204,7 @@ class ExceptionTest extends TestCase
     {
         $e = Exception::create();
 
-        $this->assertRegExp('{ExceptionTest.php$}', $e->getFile());
+        $this->assertMatchesRegularExpression('{ExceptionTest.php$}', $e->getFile());
     }
 
     public function testToArray(): void
@@ -259,14 +243,15 @@ class ExceptionTest extends TestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|Exception
+     * @return \Exception
      */
-    public function getExceptionMock(): \PHPUnit_Framework_MockObject_MockObject
+    public function getExceptionMock(): mixed
     {
         return $this
             ->getMockBuilder(Exception::class)
             ->disableOriginalConstructor()
-            ->getMock();
+            ->getMock()
+        ;
     }
 
     public function testToStringExceptionNotThrownOnBadContext(): void
@@ -278,7 +263,7 @@ class ExceptionTest extends TestCase
             $r = new \ReflectionObject($e);
             $p = $r->getProperty('file');
             $p->setAccessible(true);
-            $p->setValue($e, realpath(__DIR__.'/Fixtures/NoClass.php'));
+            $p->setValue($e, realpath(__DIR__ . '/Fixtures/NoClass.php'));
         } catch (\ReflectionException $e) {
             $this->fail(sprintf(
                 'Failed to create reflection object for "%s" or to resolve property "file" of same.', get_class($e)
@@ -294,7 +279,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @param string $message
-     * @param array  $replacements
      *
      * @return ExceptionInterface|Exception
      */
@@ -305,7 +289,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @param string $message
-     * @param array  $replacements
      *
      * @return ExceptionInterface|Exception
      */
@@ -316,9 +299,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @param object|string $object
-     * @param string        $method
-     *
-     * @return array
      */
     private static function getMethodSourceLines($object, string $method): array
     {
@@ -331,9 +311,6 @@ class ExceptionTest extends TestCase
 
     /**
      * @param object|string $object
-     * @param string        $method
-     *
-     * @return int
      */
     private static function getMethodMinSourceLinesFromStartOrUntilEnd($object, string $method): int
     {

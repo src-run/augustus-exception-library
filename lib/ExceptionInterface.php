@@ -15,24 +15,16 @@ interface ExceptionInterface extends ExceptionAttributesInterface, ExceptionCont
 {
     /**
      * Return string representation of exception.
-     *
-     * @return string
      */
     public function __toString(): string;
 
     /**
      * Return array representation of exception.
-     *
-     * @return mixed[]
      */
     public function __toArray(): array;
 
     /**
      * Returns the exception type (class name) as either a fully-qualified class name or as just the class base name.
-     *
-     * @param bool $qualified
-     *
-     * @return string
      */
     public function getType(bool $qualified = false): string;
 }

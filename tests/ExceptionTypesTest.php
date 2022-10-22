@@ -66,7 +66,7 @@ class ExceptionTypesTest extends TestCase
         $this->assertSame(__CLASS__, $e->getContextClassName());
         $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
         $this->assertSame('getException', $e->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getException', $e->getContextMethodName(true));
+        $this->assertSame(__CLASS__ . '::getException', $e->getContextMethodName(true));
         $this->assertSame($p, $e->getPrevious());
 
         $e = $this->getExceptionStatic($type, $p);
@@ -75,15 +75,12 @@ class ExceptionTypesTest extends TestCase
         $this->assertSame(__CLASS__, $e->getContextClassName());
         $this->assertSame(ClassQuery::getNameShort(__CLASS__), $e->getContextClassName(false));
         $this->assertSame('getExceptionStatic', $e->getContextMethodName());
-        $this->assertSame(__CLASS__.'::getExceptionStatic', $e->getContextMethodName(true));
+        $this->assertSame(__CLASS__ . '::getExceptionStatic', $e->getContextMethodName(true));
         $this->assertSame($p, $e->getPrevious());
     }
 
     /**
-     * @param string          $type
-     * @param \Exception|null $previous
-     * @param string          $message
-     * @param mixed[]         $replace
+     * @param mixed[] $replace
      *
      * @return Exception
      */
@@ -93,9 +90,6 @@ class ExceptionTypesTest extends TestCase
     }
 
     /**
-     * @param string     $type
-     * @param \Exception $previous
-     *
      * @return Exception
      */
     private function getExceptionStatic(string $type, \Exception $previous): \Exception
